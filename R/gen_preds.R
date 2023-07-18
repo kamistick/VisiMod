@@ -1,6 +1,6 @@
 #' Generate predictors for modeling visibility index
 #'
-#' Extracts predictor values at points. Predictors include: canopy cover, canopy height, elevation, slope, slope_derivative, curvature (plan and profile), aspect cosine, aspect sine, slope aspect cosine, slope aspect sine, as well as mean and standard deviation predictors  - for each of the the previous predictors - calculated within a focal area with radius x for x in (2, 4, 6, 8, 16, 32)
+#' Extracts predictor values at points. Predictors are generated at a resolution 10x the input raster resolution. If using 1 m input resolution, predictors will be generated at 10 m resolution. Predictors include: canopy cover, canopy height, elevation, slope, slope_derivative, curvature (plan and profile), aspect cosine, aspect sine, slope aspect cosine, slope aspect sine, as well as mean and standard deviation predictors  - for each of the the previous predictors - calculated within a focal area with radius x pixels for x in (2, 4, 6, 8, 16, 32)
 #' @param dtm SpatRaster digital terrain model at finest resolution available
 #' @param dsm SpatRaster digital surface model at finest resolution available
 #' @param pts dataframe of your points, must include x, y columns, may include vi columns
@@ -9,7 +9,7 @@
 #' @param vi_azi optional argument, with a default value of 0, if vi_type "directional_single" specify the direction of vi in degrees values between 0 and 359 (e.g. North = 0, South = 180, East = 90, West = 270)
 #' @param save  Default is TRUE. If TRUE and if 'omnidir' or 'single_directional' are used then the multiband raster of predictors will also be saved.
 #' @param save_dir if save = TRUE specify the directory where the multiband raster of predictors (ONLY if using 'omnidir' or 'directional_single') should be saved, default is your working directory.
-#' @return dataframe with predictor columns. If save = TRUE a .tif will also be written to file.
+#' @return A dataframe with predictor columns. If save = TRUE a .tif will also be written to file.
 #'
 #' @export
 #' @examples
