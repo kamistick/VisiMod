@@ -2,7 +2,7 @@
 % Please edit documentation in R/generate_pts.R
 \name{generate_pts}
 \alias{generate_pts}
-\title{Function that generates a desired number of points at an appropriate distance from study area boundary}
+\title{Create random points for VI modeling}
 \usage{
 generate_pts(dtm, dsm, num_pts, max_vis_dist)
 }
@@ -11,13 +11,21 @@ generate_pts(dtm, dsm, num_pts, max_vis_dist)
 
 \item{dsm}{SpatRaster digital surface model at finest resolution available}
 
-\item{num_pts}{The points for which vi will be calculated}
+\item{num_pts}{The number of points generated}
 
-\item{max_vis_dist}{The maximum distance to which VI will be calculated, to account for study area borders}
+\item{max_vis_dist}{The maximum distance (in meters) to which VI will be calculated, to account for study area boundary}
+}
+\value{
+dataframe with columns 'x' and 'y'
 }
 \description{
-Function that generates a desired number of points at an appropriate distance from study area boundary
+Function that generates a user-defined number of points at an appropriate distance from study area boundary
 }
 \examples{
-# generate_pts(dtm, dsm, 1000, 1000)
+# read in dtm and dsm
+dtm <- rast("dtm.tif")
+dsm <- rast("dsm.tif")
+
+# generate 1,000 points with a buffer of 1,000 meters
+generate_pts(dtm, dsm, 1000, 1000)
 }
