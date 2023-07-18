@@ -10,7 +10,7 @@
 #' @examples
 #' # read in dtm and dsm
 #' dtm <- rast("dtm.tif")
-#' dsm <- rast("dsm.tif)
+#' dsm <- rast("dsm.tif")
 #'
 #' # generate 1,000 points with a buffer of 1,000 meters
 #' generate_pts(dtm, dsm, 1000, 1000)
