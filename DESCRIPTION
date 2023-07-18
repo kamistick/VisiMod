@@ -1,0 +1,25 @@
+Package: VisiMod
+Title: Model And Map Visibility Index Across Landscapes
+Version: 0.0.0.9000
+Authors@R: 
+    person("Katherine", "Mistick", , "katherinemistick@gmail.com", role = c("aut", "cre"),
+           comment = c(ORCID = "YOUR-ORCID-ID"))
+Description: A suite of tools for modeling visibility index using random
+    forests.  Users provide a digital terrain (dtm) and digital surface
+    (dsm) model and can generate models for omnidirectional (360º) or
+    user-defined directional visibility indexes.
+License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
+    license
+Imports:
+    dplyr,
+    ggplot2,
+    Metrics,
+    parallel,
+    ranger,
+    sf,
+    spatialEco,
+    terra,
+    tuneRanger
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.2.3
