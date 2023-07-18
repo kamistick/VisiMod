@@ -25,7 +25,10 @@ generate_pts <- function(dtm, dsm, num_pts, max_vis_dist){
 
     # turn raster to polygon
     p1 <- terra::as.polygons(r1)
-
+    
+    # buffer the max distance in case of wedge
+    max_vis_dist <- max_vis_dist + 10
+    
     # buffer polygon by distance
     b <- terra:::buffer(p1, -max_vis_dist)
 
