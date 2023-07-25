@@ -33,10 +33,10 @@ gen_preds(
 \item{save_dir}{if save = TRUE specify the directory where the multiband raster of predictors (ONLY if using 'omnidir' or 'directional_single') should be saved, default is your working directory.}
 }
 \value{
-dataframe with predictor columns. If save = TRUE a .tif will also be written to file.
+A dataframe with predictor columns. If save = TRUE a .tif will also be written to file.
 }
 \description{
-Extracts predictor values at points. Predictors include: canopy cover, canopy height, elevation, slope, slope_derivative, curvature (plan and profile), aspect cosine, aspect sine, slope aspect cosine, slope aspect sine, as well as mean and standard deviation predictors  - for each of the the previous predictors - calculated within a focal area with radius x for x in (2, 4, 6, 8, 16, 32)
+Extracts predictor values at points. Predictors are generated at a resolution 10x the input raster resolution. If using 1 m input resolution, predictors will be generated at 10 m resolution. Predictors include: canopy cover, canopy height, elevation, slope, slope_derivative, curvature (plan and profile), aspect cosine, aspect sine, slope aspect cosine, slope aspect sine, as well as mean and standard deviation predictors  - for each of the the previous predictors - calculated within a focal area with radius x pixels for x in (2, 4, 6, 8, 16, 32)
 }
 \examples{
 # get your dtm and dsm

@@ -3,5 +3,6 @@
 export(calculate_vi)
 export(gen_preds)
 export(generate_pts)
+export(map_vi)
 export(model_vi)
 export(wedge)
