@@ -25,6 +25,12 @@
 
 
 gen_preds <- function(dtm, dsm, pts, vi_type, vi_fov=180, vi_azi=0, save=TRUE, save_dir=getwd()){
+  # first compareGeom, it will return an error if the rasters do not match
+  cg <- terra::compareGeom(dtm, dsm, crs=TRUE, ext=TRUE, rowcol=TRUE, res=TRUE)
+  if(cg==FALSE){
+    stop("DTM and DSM geometry not comparable, check crs, extent, and resolution.")
+  }
+  
   print(paste0("Starting predictor generation at ", Sys.time()))
 
   # next get your chm and aggregate rasters
