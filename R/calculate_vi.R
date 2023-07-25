@@ -25,7 +25,9 @@
 calculate_vi <- function(dtm, dsm, pts, vi_type, vi_dist, vi_fov=180, vi_azi = 0){
   # first compareGeom, it will return an error if the rasters do not match
   cg <- terra::compareGeom(dtm, dsm, crs=TRUE, ext=TRUE, rowcol=TRUE, res=TRUE)
-
+  if(cg==FALSE){
+    stop("DTM and DSM geometry not comparable, check crs, extent, and resolution.")
+  }
   # then have dif options for vis_types
   if (vi_type == "omnidir"){
     # go through points, calculate vi
