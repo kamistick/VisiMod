@@ -6,6 +6,7 @@
 #' @param predictors a multiband raster of all predictors
 #' @param percent_threads percent of threads that should be used in prediction, default is 50. 
 #' 
+#' @export
 #' @examples
 #' 
 #' # get your dtm and dsm
