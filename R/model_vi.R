@@ -22,8 +22,11 @@
 #' # generate predictors
 #' df_preds <- gen_preds(dtm, dsm, df, "omnidir", save = FALSE)
 #'
+#' # merge dataframes so predictors and vi values are together
+#' df_all <- merge(df, df_preds, by=c("x", "y"))
+#' 
 #' # model
-#' mod <- model_vi(df_preds, TRUE, FALSE, 80)
+#' mod <- model_vi(df_all, TRUE, FALSE, 80)
 #'
 #' # print the aggregate model results
 #' print(mod[[2]])
