@@ -270,7 +270,13 @@ gen_preds <- function(dtm, dsm, pts, vi_type, vi_fov=180, vi_azi=0, save=TRUE, s
 
     }
     if (save == TRUE){
-      writeRaster(stack, paste0(save_dir, "\\predictor_raster_stack.tif"), overwrite = TRUE)
+      if(vi_type == "omnidir"){
+        writeRaster(stack, paste0(save_dir, "\\predictor_raster_stack_f360.tif"), overwrite = TRUE)
+      } else if(vi_type == "directional_single"){
+        writeRaster(stack, paste0(save_dir, "\\predictor_raster_stack_f", as.character(vi_fov), ".tif"), overwrite = TRUE)
+      } else {
+        stop("save = TRUE only valid for vi_type 'omnidir' or 'directional_single'." )
+      }
     }
 
     # now extract all values to the dataframe
