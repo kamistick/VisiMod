@@ -76,7 +76,7 @@ model_vi <- function(df, cross_validate = FALSE, tune = FALSE, percent_cores = 5
   }
 
   # get your cores
-  useCores <- floor(paralell::detectCores() * (percent_cores/100))
+  useCores <- floor(parallel::detectCores() * (percent_cores/100))
   if (useCores<1){
     stop("Too few cores selected, please increase the percentage of cores used (values between 0-100) must result in at least one core.")
   }
