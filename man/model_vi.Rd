@@ -16,7 +16,7 @@ model_vi(df, cross_validate = FALSE, tune = FALSE, percent_cores = 50)
 \item{percent_cores}{The percent of cores you'd like to use for modeling and tuning (default is 50).}
 }
 \value{
-dataframe with predictions column indicating predictions made by the model.
+If cross_validate is FALSE, returns a random forest. If cross_validate is TRUE, returns a list where [\link{1}] is a ataframe with predictions column indicating predictions made by the model and [\link{2}] is the trained random forest model.
 }
 \description{
 Models VI froma dataframe that includes predictor values.
