@@ -5,7 +5,7 @@
 #' @param cross_validate default is FALSE. True will execute a 4 fold spatial cross validation. False will train on all available points. If true, the predictions that are returned are predictions for folds made by models build excluding the respective fold. For example, predictions made on fold one are generated from models built using folds 2, 3, and 4.
 #' @param tune default is FALSE. TRUE will tune a full model and use tuned hyperparameters (mtry, minimum node size, sample fraction) for modeling.
 #' @param percent_cores The percent of cores you'd like to use for modeling and tuning (default is 50).
-#' @return dataframe with predictions column indicating predictions made by the model.
+#' @return If cross_validate is FALSE, returns a random forest. If cross_validate is TRUE, returns a list where [[1]] is a ataframe with predictions column indicating predictions made by the model and [[2]] is the trained random forest model.
 #'
 #' @export
 #' @examples
