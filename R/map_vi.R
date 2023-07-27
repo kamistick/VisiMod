@@ -32,7 +32,7 @@
 #' plot(mymap)
 
 map_vi <- function(mod, predictors, percent_threads){
-  useThreads <- floor(detectCores() * (percent_cores/100))
+  useThreads <- floor(detectCores() * (percent_threads/100))
   mod_names <- mod$forest$independent.variable.names
   pred_names <- names(predictors)
   if(all(pred_names %in% mod_names)==FALSE){
