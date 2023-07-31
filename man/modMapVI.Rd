@@ -4,12 +4,14 @@
 \alias{modMapVI}
 \title{Model and Map VI}
 \usage{
-modMapVI(dtm, dsm, dist, vi_type, vi_fov, vi_azi, save_dir)
+modMapVI(dtm, dsm, num_pts, dist, vi_type, vi_fov, vi_azi, save_dir)
 }
 \arguments{
 \item{dtm}{SpatRaster digital terrain model at finest resolution available}
 
 \item{dsm}{SpatRaster digital surface model at finest resolution available}
+
+\item{num_pts}{Number of points used to train the model}
 
 \item{dist}{distance to which VI is calculated. If multiple distances should be considered use c().}
 
@@ -20,11 +22,19 @@ modMapVI(dtm, dsm, dist, vi_type, vi_fov, vi_azi, save_dir)
 \item{vi_azi}{optional argument, with a default value of 0, if vi_type "directional_single" specify the direction of vi in degrees values between 0 and 359 (e.g. North = 0, South = 180, East = 90, West = 270). If multiple azimuths should be considered use c().}
 
 \item{save_dir}{The directory where intermediary files will be saved.}
-
-\item{num_pts}{Number of points used to train the model}
 }
 \value{
 A SpatRaster, or list of SpatRasters, of mapped VI with a potential range of 0-1.
+#' @examplesget your dtm and dsm
+
+dsm <- rast("dsm.tif")
+dtm <- rast("dtm.tif")model and map VI
+
+outras <- modMapVI(dtm, dsm, 1000, 500, "directional_single", 120, c(0,120,240),  "C:\\proj1\\")create a 3 band raster to display in RGB
+
+stack1 <- terra::\verb{add<-}(outras[\link{1}], outras[\link{2}])
+multiband_ras <- terra::\verb{add<-}(stack1, outras[\link{3}])
+writeRaster(multiband_ras, "C:\\proj1\\vi_map.tif")
 }
 \description{
 Full workflow for mapping VI using random forest modeling.
