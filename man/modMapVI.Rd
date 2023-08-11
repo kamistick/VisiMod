@@ -25,17 +25,20 @@ modMapVI(dtm, dsm, num_pts, dist, vi_type, vi_fov, vi_azi, save_dir)
 }
 \value{
 A SpatRaster, or list of SpatRasters, of mapped VI with a potential range of 0-1.
-#' @examplesget your dtm and dsm
-
-dsm <- rast("dsm.tif")
-dtm <- rast("dtm.tif")model and map VI
-
-outras <- modMapVI(dtm, dsm, 1000, 500, "directional_single", 120, c(0,120,240),  "C:\\proj1\\")create a 3 band raster to display in RGB
-
-stack1 <- terra::\verb{add<-}(outras[\link{1}], outras[\link{2}])
-multiband_ras <- terra::\verb{add<-}(stack1, outras[\link{3}])
-writeRaster(multiband_ras, "C:\\proj1\\vi_map.tif")
 }
 \description{
 Full workflow for mapping VI using random forest modeling.
+}
+\examples{
+# get your dtm and dsm
+dsm <- rast("dsm.tif")
+dtm <- rast("dtm.tif")
+
+# model and map VI
+outras <- modMapVI(dtm, dsm, 1000, 500, "directional_single", 120, c(0,120,240),  "C:\\\\proj1\\\\")
+
+# create a 3 band raster to display in RGB
+stack1 <- terra::`add<-`(outras[[1]], outras[[2]])
+multiband_ras <- terra::`add<-`(stack1, outras[[3]])
+writeRaster(multiband_ras, "C:\\\\proj1\\\\vi_map.tif")
 }
