@@ -9,9 +9,10 @@
 #' @param vi_fov optional argument, with a default value of 180, if vi_type "directional_single" is used this specifies the field of view for the vi calculation. If multiple FOVs should be considered use c().
 #' @param vi_azi optional argument, with a default value of 0, if vi_type "directional_single" specify the direction of vi in degrees values between 0 and 359 (e.g. North = 0, South = 180, East = 90, West = 270). If multiple azimuths should be considered use c().   
 #' @param save_dir The directory where intermediary files will be saved.
-#' 
 #' @return A SpatRaster, or list of SpatRasters, of mapped VI with a potential range of 0-1.
-#' #' @examples
+#' 
+#' @export
+#' @examples
 #' # get your dtm and dsm
 #' dsm <- rast("dsm.tif")
 #' dtm <- rast("dtm.tif")
