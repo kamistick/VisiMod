@@ -89,8 +89,8 @@ model_vi <- function(df, cross_validate = FALSE, tune = FALSE, percent_cores = 5
     rf_all <- ranger::ranger(formula = vi~., data= df, importance = "permutation", num.threads = useCores)
     if(tune ==TRUE){
       #tune by making task, tuning, and getting tune vars
-      rf_task <- makeRegrTask(data = df, target = "vi")
-      tuned <- tuneRanger(rf_task, num.threads = useCores)
+      rf_task <- tuneRanger::makeRegrTask(data = df, target = "vi")
+      tuned <- tuneRanger::tuneRanger(rf_task, num.threads = useCores)
       mtry_val <- tuned$recommended.pars$mtry
       min_node_val <- tuned$recommended.pars$min.node.size
       sample_fraction_val <- tuned$recommended.pars$sample.fraction
