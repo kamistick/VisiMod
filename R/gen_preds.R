@@ -385,7 +385,7 @@ gen_preds <- function(dtm, dsm, pts, vi_type, vi_fov=180, vi_azi=0, save=TRUE, s
 
         # get TPI value and add to datafrme
         tpi <- elev_val - wa_elev[1,2]
-        pred_col <- paste0("TPI_", as.character(pred_rad))
+        pred_col <- paste0("tpi_", as.character(pred_rad))
         pts[i, pred_col] <- tpi
 
       }
