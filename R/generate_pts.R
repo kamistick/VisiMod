@@ -21,7 +21,8 @@ generate_pts <- function(dtm, dsm, num_pts, max_vis_dist){
   if (cg==TRUE){
     # get a single value version of the raster
     r1 <- dtm
-    r1[!is.na(r1)] <- 1
+    # r1[!is.na(r1)] <- 1
+    r1 <- ifel(!is.na(r1), 1)
 
     # turn raster to polygon
     p1 <- terra::as.polygons(r1)
