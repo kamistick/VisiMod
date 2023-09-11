@@ -1,10 +1,10 @@
 #' Create random points for VI modeling
 #'
 #' Function that generates a user-defined number of points at an appropriate distance from study area boundary
-#' @param dtm SpatRaster digital terrain model at finest resolution available
-#' @param dsm SpatRaster digital surface model at finest resolution available
-#' @param num_pts The number of points generated
-#' @param max_vis_dist The maximum distance (in meters) to which VI will be calculated, to account for study area boundary
+#' @param dtm SpatRaster. Digital terrain model at finest resolution available
+#' @param dsm SpatRaster. Digital surface model at finest resolution available
+#' @param num_pts Numeric. The number of points generated
+#' @param max_vis_dist Numeric. The maximum distance (in meters) to which VI will be calculated, to account for study area boundary
 #' @return dataframe with columns 'x' and 'y'
 #' @export
 #' @examples

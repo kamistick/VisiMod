@@ -7,13 +7,13 @@
 generate_pts(dtm, dsm, num_pts, max_vis_dist)
 }
 \arguments{
-\item{dtm}{SpatRaster digital terrain model at finest resolution available}
+\item{dtm}{SpatRaster. Digital terrain model at finest resolution available}
 
-\item{dsm}{SpatRaster digital surface model at finest resolution available}
+\item{dsm}{SpatRaster. Digital surface model at finest resolution available}
 
-\item{num_pts}{The number of points generated}
+\item{num_pts}{Numeric. The number of points generated}
 
-\item{max_vis_dist}{The maximum distance (in meters) to which VI will be calculated, to account for study area boundary}
+\item{max_vis_dist}{Numeric. The maximum distance (in meters) to which VI will be calculated, to account for study area boundary}
 }
 \value{
 dataframe with columns 'x' and 'y'
