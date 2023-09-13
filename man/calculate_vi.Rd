@@ -7,25 +7,32 @@
 calculate_vi(dtm, dsm, pts, vi_type, vi_dist, vi_fov = 180, vi_azi = 0)
 }
 \arguments{
-\item{dtm}{SpatRaster digital terrain model at finest resolution available}
+\item{dtm}{SpatRaster. Digital terrain model at finest resolution available.}
 
-\item{dsm}{SpatRaster digital surface model at finest resolution available}
+\item{dsm}{SpatRaster. Digital surface model at finest resolution available.}
 
-\item{pts}{A dataframe of the points (with an 'x' and 'y' column) for which vi will be calculated}
+\item{pts}{dataframe. The point locations (with an 'x' and 'y' column) for which vi will be calculated.}
 
-\item{vi_type}{which type of VI calculation would you like to conduct? One of: omnidir (omnidirectional, 360 degree), directional_single (a single specified view direction), directional_random (multiple random view directions will be sampled)}
+\item{vi_type}{Character. Defines which type of VI calculation you would like to conduct. One of: "omnidir" (omnidirectional, 360 degree), "directional_single" (a single specified view direction for each point), "directional_random" (viewing directions will be randomly assigned to each point).}
 
-\item{vi_dist}{distance to which vi will be calculated (can be a list of distances if you want to look at multiple (e.g. c(100,200,300)))}
+\item{vi_dist}{Numeric. Viewing distance from each point within which VI will be calculated, in meters. Can be defined as a single numeric value or a vector of numeric distances if you want to perform a multiscale analysis.}
 
-\item{vi_fov}{optional argument, with a default value of 180, if vi_type "directional_single" or "directional_random" are selected. Specifies the field of view for the vi calculation}
+\item{vi_fov}{Numeric. Defines the angular field of view, in degrees, of the directional wedge used for the VI calculation. Only used if vi_type == "directional_single" | vi_type == "directional_random". Values must be > 0 and < 360.}
 
-\item{vi_azi}{optional argument, with a default value of 0, if vi_type "directional_single" specify the direction of vi in degrees values between 0 and 359 (e.g. North = 0, South = 180, East = 90, West = 270)}
+\item{vi_azi}{Numeric. Defines the azimuth, or central viewing direction, in degrees, of the directional wedge used for VI calculation.  Only used if vi_type == "directional_single" | vi_type == "directional_random". Values must be 0-360.}
 }
 \value{
 dataframe with columns 'x', 'y', 'vi_x' for x in vi_dist, and 'azimuth' if vi_type = 'directional_random'
 }
 \description{
-Uses both a dtm and dsm to calculate visibility index (visible area/ total area) at points.
+Function that uses both a digital terrain model (DTM) and digital surface model (DSM) to calculate the visibility index (VI) from a series of point locations. VI represents the proportion of area visible from a given point relative to the total area within a viewing distance of interest, ranging from 0 (no visibility) to 1 (complete visibility). This function enables the calculation of omnidirectional VI (in 360 degrees surrounding each point) or directional VI (within a viewing "wedge" defined by an azimuth and angular field of view). Directional visibility can be calculated in two ways: (1) in a singular, specific viewing direction/azimuth; or (2) with each point having a randomly assigned viewing direction/azimuth. The former is more useful for building VI predictive models in a singular direction; the latter can be used to build directionally independent models that can be applied for the prediction of visibility in any direction. Irrespective of the VI type, users define one or more distances or viewing radii within which VI is calculated. VI values are appended to input points are intended for use as training and validation in the VisiMod visibility modeling workflow.
+}
+\details{
+\itemize{
+\item \code{dtm} and \code{dsm} SpatRasters can be defined using the terra library. They should have the same coordinate system, resolution, extent, and origin.
+\item \code{pts} can be defined using the \code{generate_pts()} function within the VisiMod library. But, they can also be created through many other means. For example, one could derive a dataframe of x-y coordinate pairs from a SpatVector using \code{terra::crds()} or from an sf object using \code{sf::st_coordinates()}. However, using \code{generate_pts()} is advantageous, as it ensures that points are (1) in the same coordinate system as \code{dtm} and \code{dsm}; and (2) are at least \code{vi_dist} from the edge of the study area.
+\item \code{vi_dist} should not exceed the \code{max_vis_dist} defined in the previous \code{generate_pts()} step in the VisiMod workflow. \code{vi_dist} will affect processing time quite dramatically. As distance increases, processing time will increase exponentially. We have set the default to 500m, and do not recommend attempting to map VI beyond 2000m.
+}
 }
 \examples{
 # get your dtm and dsm

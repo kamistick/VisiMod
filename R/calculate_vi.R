@@ -1,13 +1,17 @@
 #' Calculate visibility index at points
 #'
-#' Uses both a dtm and dsm to calculate visibility index (visible area/ total area) at points.
-#' @param dtm SpatRaster digital terrain model at finest resolution available
-#' @param dsm SpatRaster digital surface model at finest resolution available
-#' @param pts A dataframe of the points (with an 'x' and 'y' column) for which vi will be calculated
-#' @param vi_type which type of VI calculation would you like to conduct? One of: omnidir (omnidirectional, 360 degree), directional_single (a single specified view direction), directional_random (multiple random view directions will be sampled)
-#' @param vi_dist distance to which vi will be calculated (can be a list of distances if you want to look at multiple (e.g. c(100,200,300)))
-#' @param vi_fov optional argument, with a default value of 180, if vi_type "directional_single" or "directional_random" are selected. Specifies the field of view for the vi calculation
-#' @param vi_azi optional argument, with a default value of 0, if vi_type "directional_single" specify the direction of vi in degrees values between 0 and 359 (e.g. North = 0, South = 180, East = 90, West = 270)
+#' Function that uses both a digital terrain model (DTM) and digital surface model (DSM) to calculate the visibility index (VI) from a series of point locations. VI represents the proportion of area visible from a given point relative to the total area within a viewing distance of interest, ranging from 0 (no visibility) to 1 (complete visibility). This function enables the calculation of omnidirectional VI (in 360 degrees surrounding each point) or directional VI (within a viewing "wedge" defined by an azimuth and angular field of view). Directional visibility can be calculated in two ways: (1) in a singular, specific viewing direction/azimuth; or (2) with each point having a randomly assigned viewing direction/azimuth. The former is more useful for building VI predictive models in a singular direction; the latter can be used to build directionally independent models that can be applied for the prediction of visibility in any direction. Irrespective of the VI type, users define one or more distances or viewing radii within which VI is calculated. VI values are appended to input points are intended for use as training and validation in the VisiMod visibility modeling workflow.
+#' @details
+#' * `dtm` and `dsm` SpatRasters can be defined using the terra library. They should have the same coordinate system, resolution, extent, and origin.
+#' * `pts` can be defined using the `generate_pts()` function within the VisiMod library. But, they can also be created through many other means. For example, one could derive a dataframe of x-y coordinate pairs from a SpatVector using `terra::crds()` or from an sf object using `sf::st_coordinates()`. However, using `generate_pts()` is advantageous, as it ensures that points are (1) in the same coordinate system as `dtm` and `dsm`; and (2) are at least `vi_dist` from the edge of the study area.
+#' * `vi_dist` should not exceed the `max_vis_dist` defined in the previous `generate_pts()` step in the VisiMod workflow. `vi_dist` will affect processing time quite dramatically. As distance increases, processing time will increase exponentially.
+#' @param dtm SpatRaster. Digital terrain model at finest resolution available.
+#' @param dsm SpatRaster. Digital surface model at finest resolution available.
+#' @param pts dataframe. The point locations (with an 'x' and 'y' column) for which vi will be calculated.
+#' @param vi_type Character. Defines which type of VI calculation you would like to conduct. One of: "omnidir" (omnidirectional, 360 degree), "directional_single" (a single specified view direction for each point), "directional_random" (viewing directions will be randomly assigned to each point).
+#' @param vi_dist Numeric. Viewing distance from each point within which VI will be calculated, in meters. Can be defined as a single numeric value or a vector of numeric distances if you want to perform a multiscale analysis.
+#' @param vi_fov Numeric. Defines the angular field of view, in degrees, of the directional wedge used for the VI calculation. Only used if vi_type == "directional_single" | vi_type == "directional_random". Values must be > 0 and < 360.
+#' @param vi_azi Numeric. Defines the azimuth, or central viewing direction, in degrees, of the directional wedge used for VI calculation.  Only used if vi_type == "directional_single" | vi_type == "directional_random". Values must be 0-360.
 #' @return dataframe with columns 'x', 'y', 'vi_x' for x in vi_dist, and 'azimuth' if vi_type = 'directional_random'
 #'
 #' @export
