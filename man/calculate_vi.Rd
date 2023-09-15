@@ -31,7 +31,7 @@ Function that uses both a digital terrain model (DTM) and digital surface model 
 \itemize{
 \item \code{dtm} and \code{dsm} SpatRasters can be defined using the terra library. They should have the same coordinate system, resolution, extent, and origin.
 \item \code{pts} can be defined using the \code{generate_pts()} function within the VisiMod library. But, they can also be created through many other means. For example, one could derive a dataframe of x-y coordinate pairs from a SpatVector using \code{terra::crds()} or from an sf object using \code{sf::st_coordinates()}. However, using \code{generate_pts()} is advantageous, as it ensures that points are (1) in the same coordinate system as \code{dtm} and \code{dsm}; and (2) are at least \code{vi_dist} from the edge of the study area.
-\item \code{vi_dist} should not exceed the \code{max_vis_dist} defined in the previous \code{generate_pts()} step in the VisiMod workflow. \code{vi_dist} will affect processing time quite dramatically. As distance increases, processing time will increase exponentially. We have set the default to 500m, and do not recommend attempting to map VI beyond 2000m.
+\item \code{vi_dist} should not exceed the \code{max_vis_dist} defined in the previous \code{generate_pts()} step in the VisiMod workflow. \code{vi_dist} will affect processing time quite dramatically. As distance increases, processing time will increase exponentially.
 }
 }
 \examples{
