@@ -19,7 +19,7 @@ gen_pts(dtm, dsm, num_pts = 200, max_vis_dist)
 data.frame with columns 'x' and 'y'
 }
 \description{
-Function that generates a user-defined number of randomly distributed points within a study area at an appropriate distance from the study area boundary. Study area extent defined by input digital terrain model (DTM) and digital surface model (DSM). These points are intended for use as training and validation points in the VisiMod visibility modeling workflow.
+The second suggested function in the VisiMod workflow, following \code{prep_dems()}. Function that generates a user-defined number of randomly distributed points within a study area at an appropriate distance from the study area boundary. Study area extent defined by input digital terrain model (DTM) and digital surface model (DSM). These points are intended for use as training and validation points in the VisiMod visibility modeling workflow.
 }
 \details{
 \itemize{

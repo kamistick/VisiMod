@@ -11,41 +11,60 @@ gen_preds(
   vi_type,
   vi_fov = 180,
   vi_azi = 0,
+  agg_fact = 10L,
   save = TRUE,
   save_dir = getwd()
 )
 }
 \arguments{
-\item{dtm}{SpatRaster digital terrain model at finest resolution available}
+\item{dtm}{SpatRaster. Digital terrain model at finest resolution available.}
 
-\item{dsm}{SpatRaster digital surface model at finest resolution available}
+\item{dsm}{SpatRaster. Digital surface model at finest resolution available.}
 
-\item{pts}{dataframe of your points, must include x, y columns, may include vi columns}
+\item{pts}{data.frame. The point locations for which vi will be calculated. At a minimum, 'x' and 'y' columns are required. An 'azimuth' column is required if \code{vi_type == 'directional_random'}. One or more 'vi' columns should also be present if this is run after \code{calculate_vi()}.}
 
-\item{vi_type}{which type of VI calculation did you do? One of: 'omnidir' (omnidirectional, 360 degree), 'directional_single' (a single specified view direction), 'directional_random' (multiple random view directions will be sampled)}
+\item{vi_type}{Character. Defines which type of VI calculation you would like to conduct. One of: 'omnidir' (omnidirectional, 360 degree), 'directional_single' (a single specified view direction for each point), 'directional_random' (viewing directions will be randomly assigned to each point).}
 
-\item{vi_fov}{optional argument, with a default value of 180, if vi_type "directional_single" or "directional_random" are selected. Specifies the field of view for the vi calculation}
+\item{vi_fov}{Numeric. Defines the angular field of view, in degrees, of the directional wedge used for the VI calculation. Only used if \code{vi_type == 'directional_single' | vi_type == 'directional_random'}. Values must be > 0 and < 360.}
 
-\item{vi_azi}{optional argument, with a default value of 0, if vi_type "directional_single" specify the direction of vi in degrees values between 0 and 359 (e.g. North = 0, South = 180, East = 90, West = 270)}
+\item{vi_azi}{Numeric. Defines the azimuth, or central viewing direction, in degrees, of the directional wedge used for VI calculation. Only used if \code{vi_type == 'directional_single'}. Values must be 0-360.}
 
-\item{save}{Default is TRUE. If TRUE and if 'omnidir' or 'single_directional' are used then the multiband raster of predictors will also be saved.}
+\item{agg_fact}{Numeric. Defines the aggregation factor that determines the output resolution of your predictors (and your eventual VI map if you complete the VisiMod workflow). A multiplier applied to the input resolution of your DTM/DSM. Must be an integer.}
 
-\item{save_dir}{if save = TRUE specify the directory where the multiband raster of predictors (ONLY if using 'omnidir' or 'directional_single') should be saved, default is your working directory.}
+\item{save}{Boolean. Defines whether or not you would like to save a multiband raster of predictors. Default is TRUE. Only used if \code{vi_type == 'omnidir' | vi_type == 'single_directional'}.}
+
+\item{save_dir}{Character. If \code{save == TRUE}, this specifies the directory where the multiband raster of predictors should be saved. Only used if \code{vi_type == 'omnidir' | vi_type == 'directional_single'}. Default is your working directory.}
 }
 \value{
-A dataframe with predictor columns. If save = TRUE a .tif will also be written to file.
+If \code{vi_type == 'omnidir' | vi_type == 'directional_single'}, a list with two items: (1) \code{pred_pts} is a data.frame with predictor data associated with each input point; and (2) \code{pred_rast} is a SpatRaster multiband raster with all of the predictor data. If \code{save == TRUE} a TIF will also be written to file. If \code{vi_type == 'directional_random'}, then only a data.frame with predictor point values will be returned.
 }
 \description{
-Extracts predictor values at points. Predictors are generated at a resolution 10x the input raster resolution. If using 1 m input resolution, predictors will be generated at 10 m resolution. Predictors include: canopy cover, canopy height, elevation, slope, slope_derivative, curvature (plan and profile), aspect cosine, aspect sine, slope aspect cosine, slope aspect sine, as well as mean and standard deviation predictors  - for each of the the previous predictors - calculated within a focal area with radius x pixels for x in (2, 4, 6, 8, 16, 32)
+The fourth suggested function in the VisiMod workflow, following (1) \code{prep_dems()}, (2) \code{gen_pts()}, and (3) \code{calculate_vi()}. This function generates and extracts a suite of visibility predictor pixel values at each input point location. The predictor variables were designed to capture the dominant landscape controls of visibility in a wildland (undeveloped) environment that can be readily quantified using a combination of a DTM and DSM. They include canopy cover, canopy height, elevation, slope, derivative of slope, terrain curvature (plan and profile), cosine and sine of aspect, and slope x cosine and sine of aspect. Predictor values are extracted both locally (i.e., representing the terrain/vegetation characteristic of the pixel within which each point lies) and focally (i.e., within a focal neighborhood of pixels surrounding the point). In the case of focally derived predictors, the focal mean and standard deviation are calculated for each landscape variable within a neighborhood with radius \code{x} pixels for \code{x \%in\% c(2, 4, 6, 8, 16, 32)}. If the \code{vi_type == 'omnidir'}, the focal neighborhood will be a circle surrounding each point. If the \code{vi_type == 'directional_single' | vi_type == 'directional_random'}, the focal neighborhood will be a 'wedge' defined by the central viewing azimuth (\code{vi_azi}) and the angular field of view (\code{vi_fov}).
+}
+\details{
+\itemize{
+\item \code{dtm} and \code{dsm} SpatRasters can be defined using the terra library. They should have the same coordinate system, resolution, extent, and origin.
+\item \code{pts} should come from the successful execution of the previous function in the VisiMod workflow: \code{calculate_vi()}
+\item \code{vi_type}, \code{vi_fov}, and \code{vi_azi} should match those used in your previous call to the \code{calculate_vi()} function. In the VisiMod workflow, this will ensure that your visibility modeling response variable(s) (VI within a spatial scope of interest) will correspond with the spatial scope of your predictor variables.
+\item Note that if \code{vi_type == 'directional_random'}, this function will not be able to save a multiband raster with spatially-exhaustive ('wall-to-wall') representations of the predictor variables, as the directional predictor values are calculated according to the randomly-assigned azimuths of each input point. This is useful for building a robust, directionally-independent model that can generate directional VI predictions, but to apply that model to generate a VI map in a specific direction will require rerunning this function with \code{vi_type == 'directional_single'}. For most applications, it will be more useful and efficient to set \code{vi_type} to \code{'directional_single'}.
+\item Predictors are generated at a user-defined coarser resolution than the input DTM/DSM resolution to facilitate broad scale, efficient VI modeling and mapping. Defining the aggregation factor (\code{agg_fact}) to be too low will result in very large predictor files, consume larger proportions of RAM, and slow down the VisiMod workflow. Conversely, setting \code{agg_fact} too high, although computationally more efficient, may result in predictors that are too spatially coarse to capture sufficient landscape structural detail capable of predicting visibility. In testing, we have found predictors with spatial resolutions of approximately 10m to produce a desirable balance between these extremes.
+\item For the focal predictors, by default, the following pixel radii are used to define your focal anlaysis neighborhood: 2, 4, 6, 8, 16, and 32 pixels. It is possible that a circular or wedge neighborhood around a given point may extend beyond the bounds of your input DTM/DSM, particularly at the larger radii (i.e., 16- or 32-pixels). Whether this happens or not will be dependent upon two factors: (1) the \code{max_vis_dist} supplied to the function gen_pts(); and (2) the \code{agg_fact} specified in this function. For example, if you defined your \code{max_vis_dist} to be 200m, that means some of your sample points may be 200m from the edge of your DTM/DSM. If your DTM/DSM were 1m resolution, and you specified an \code{agg_fact} of 10, your predictor layers would have a 10m resolution. A 32-pixel radius circle or wedge would have a radius of 320m, meaning the neighborhood would reach beyond the extent of your study area. In situations like this, the focal predictors would all return NAs to ensure that incomplete neighborhoods aren't affecting the quality of the predictor data extracted at each point. So, you must think ahead about the spatial relationships between study area size, \code{max_vis_dist}, input and output resolutions to ensure that your data are complete.
+}
 }
 \examples{
 # get your dtm and dsm
 dsm <- rast("dsm.tif")
 dtm <- rast("dtm.tif")
 
+# check dtm and dsm
+pd <- prep_dems(dtm, dsm, "C:/temp/dtm_filled.tif", "C:/temp/dsm_filled.tif")
+
 # get your points
 my_points <- generate_pts(dtm, dsm, 100, 1000)
 
+# calculate vi
+my_points <- calculate_vi(dtm, dsm, my_points, "directional_single", c(500, 1000), 90, 90, 4L, 5L)
+
 # generate predictors
-preds <- gen_preds(dtm, dsm, my_points, "omnidir", save = FALSE)
+preds <- gen_preds(dtm, dsm, my_points, "directional_single", 90, 90, T, "C:/temp")
 }

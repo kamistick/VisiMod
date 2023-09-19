@@ -1,6 +1,6 @@
 #' Create random points for VI modeling
 #'
-#' Function that generates a user-defined number of randomly distributed points within a study area at an appropriate distance from the study area boundary. Study area extent defined by input digital terrain model (DTM) and digital surface model (DSM). These points are intended for use as training and validation points in the VisiMod visibility modeling workflow.
+#' The second suggested function in the VisiMod workflow, following `prep_dems()`. Function that generates a user-defined number of randomly distributed points within a study area at an appropriate distance from the study area boundary. Study area extent defined by input digital terrain model (DTM) and digital surface model (DSM). These points are intended for use as training and validation points in the VisiMod visibility modeling workflow.
 #' @details
 #' * `dtm` and `dsm` SpatRasters can be defined using the terra library. They should have the same coordinate system, resolution, extent, and origin.
 #' * The more points generated, the more robust the modeling procedure will be; however, more points will also increase total processing time for subsequent functions in the workflow. The default is set to 200, which should achieve a nice balance between model performance and processing time. We do not recommend generating more than 1000 points.
