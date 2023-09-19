@@ -34,7 +34,7 @@
 #' my_points <- calculate_vi(dtm, dsm, my_points, "directional_single", c(500, 1000), 90, 90, 4L, 5L)
 
 
-calculate_vi <- function(dtm, dsm, pts, vi_type, vi_rad, vi_fov=180, vi_azi = 0, 
+calc_vi <- function(dtm, dsm, pts, vi_type, vi_rad, vi_fov=180, vi_azi = 0, 
                          cores = floor(parallel::detectCores()/2), n_retry = 5L){
   
   # first compareGeom, it will return an error if the rasters do not match
