@@ -1,7 +1,7 @@
 #' Check and prepare DEMs for use in VisiMod workflow
 #'
 #' @description
-#' The first suggested function in the VisiMod workflow. This workflow relies on two main input digital elevation models (DEMs): (1) a digital terrain model (DTM), a raster dataset where each pixel value represents the elevation of the ground surface; and (2) a digital surface model (DSM), a raster dataset where each pixel represents the elevation of the ground plus any above-ground features (e.g., trees). It is recommended that these DEMs are generated at a high spatial resolution (e.g., 1m) from lidar data. This function ensures that both of these inputs are suitable for use in the VisiMod workflow. It begins by checking whether the two datasets are spatially aligned (same CRS, extent, resolution, origin, and number of rows/columns). If not, the function terminates and the user is asked to ensure proper alignment before proceeding with other VisiMod functions. If so, a secondary check is performed to determine if there are any NA cells within the interior of either dataset. Interior NA values (i.e., within a polygon representing the outer dimensions of the data), will be problematic for VisiMod. If present, the function will fill these NA values using focal means from surrounding, non-NA pixels and output new DEMs. The resulting NA-free DEMs should be used throughout the remainder of the VisiMod workflow.
+#' The first suggested function in the VisiMod workflow. This workflow relies on two main input digital elevation models (DEMs): (1) a digital terrain model (DTM), a raster dataset where each pixel value represents the elevation of the ground surface; and (2) a digital surface model (DSM), a raster dataset where each pixel represents the elevation of the ground plus any above-ground features (e.g., trees). It is recommended that these DEMs are generated at a high spatial resolution (e.g., 1m) from lidar data. This function ensures that both of these inputs are suitable for use in the VisiMod workflow. It begins by checking whether the two datasets are spatially aligned (same CRS, extent, resolution, origin, and number of rows/columns). If not, the function terminates and the user is asked to ensure proper alignment before proceeding with other VisiMod functions. If so, a secondary check is performed to determine if they are in appropriate projected coordinate systems, where linear units are measured in meters (e.g., UTM). If not, the function terminates and the user is asked to reproject the data before proceeding with other VisiMod functions. If so, a tertiary check is performed to determine if there are any NA cells within the interior of either dataset. Interior NA values (i.e., within a polygon representing the outer dimensions of the data), will be problematic for VisiMod. If present, the function will fill these NA values using focal means from surrounding, non-NA pixels and output new DEMs. The resulting NA-free DEMs should be used throughout the remainder of the VisiMod workflow.
 #' 
 #' @param in_dtm SpatRaster. Digital terrain model at finest resolution available.
 #' @param in_dsm SpatRaster. Digital surface model at finest resolution available.
@@ -19,6 +19,8 @@
 #' pd <- prep_dems(dtm, dsm, "C:/temp/dtm_filled.tif", "C:/temp/dsm_filled.tif")
 
 prep_dems <- function(in_dtm, in_dsm, out_dtm, out_dsm){
+  
+  #-------------------alignment
   
   # print message
   message("Checking for spatial alignment between dtm and dsm...")
@@ -72,6 +74,22 @@ prep_dems <- function(in_dtm, in_dsm, out_dtm, out_dsm){
     message("  dtm and dsm are spatially aligned")
   }
   
+  #-------------------linear units
+
+  # print message
+  message("Checking to make sure DTM/DSM coordinate system has linear units in meters...")
+  
+  # check linear units
+  units <- terra::linearUnits(in_dtm)
+  if (!units == 1){
+    stop("You must ensure that your input dtm and dsm are in a projected coordinate system with linear units in meters (e.g., UTM)")  
+  } else {
+    message("  dtm and dsm have suitable coordinate systems")
+  }
+  
+  
+  #-------------------interior NAs
+
   # print message
   message("Checking for interior NA values...")
   
