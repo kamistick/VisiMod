@@ -35,7 +35,7 @@
 #' # model
 #' mod <- model_vi(preds, 500, T, T, 5L)
 
-model_vi <- function(df, vi_rad, cross_validate = FALSE, tune = FALSE, num_cores = floor(parallel::detectCores()/2)){
+mod_vi <- function(df, vi_rad, cross_validate = FALSE, tune = FALSE, num_cores = floor(parallel::detectCores()/2)){
   
   # print message
   message(paste0(Sys.time(), " model_vi() has begun"))
