@@ -2,9 +2,9 @@
 #' 
 #' This function takes in a model and a stack of predictor rasters and models VI across each pixel.
 #' 
-#' @param mod random forest model 
-#' @param predictors a multiband raster of all predictors
-#' @param percent_threads percent of threads that should be used in prediction, default is 50. 
+#' @param mod ranger. A random forest model generated using [ranger::ranger()].
+#' @param predictors SpatRaster. A multiband SpatRaster of all predictors used for VI modeling.
+#' @param cores Numeric. Defines the number of cores you would like to use for parallel processing. Defaults to half of the cores on your machine.
 #' 
 #' @export
 #' @examples
@@ -31,8 +31,8 @@
 #' mymap <- map_vi(rf, predictors, 50)
 #' plot(mymap)
 
-map_vi <- function(mod, predictors, percent_threads){
-  useThreads <- floor(detectCores() * (percent_threads/100))
+map_vi <- function(mod, predictors, cores = floor(parallel::detectCores()/2)){
+  useThreads <- cores
   mod_names <- mod$forest$independent.variable.names
   pred_names <- names(predictors)
   if(all(pred_names %in% mod_names)==FALSE){
