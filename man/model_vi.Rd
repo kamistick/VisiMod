@@ -4,43 +4,56 @@
 \alias{model_vi}
 \title{Model VI using a random forest}
 \usage{
-model_vi(df, cross_validate = FALSE, tune = FALSE, percent_cores = 50)
+model_vi(
+  df,
+  vi_rad,
+  cross_validate = FALSE,
+  tune = FALSE,
+  num_cores = floor(parallel::detectCores()/2)
+)
 }
 \arguments{
-\item{df}{dataframe with predictor variables, target vi values, and an 'x' and 'y' column with coordinates}
+\item{df}{data.frame. Should contain 'x' and 'y' columns (resulting from \code{gen_pts()}), a 'vi' column (resulting from \code{calculate_vi()}), and several predictor columns (resulting from \code{gen_preds()}). See Details for information on the presence of additional columns in your data.frame.}
 
-\item{cross_validate}{default is FALSE. True will execute a 4 fold spatial cross validation. False will train on all available points. If true, the predictions that are returned are predictions for folds made by models build excluding the respective fold. For example, predictions made on fold one are generated from models built using folds 2, 3, and 4.}
+\item{vi_rad}{Numeric. Defines the radius at which you intend to model VI. This value should match at least one of those used in the execution of \code{calculate_vi()}, and as a result, there should be a column in \code{df} named \code{vi_x} where \code{x == vi_rad}.}
 
-\item{tune}{default is FALSE. TRUE will tune a full model and use tuned hyperparameters (mtry, minimum node size, sample fraction) for modeling.}
+\item{cross_validate}{Boolean. Defines whether or not you would like to perform a 4-fold spatial cross-validation procedure to assess model performance. If TRUE, the sample points are split into four equally-sized, extent-based spatial quadrants, and models are iteratively trained using points from 3/4 of the quadrants and applied to the prediction of the fourth. If FALSE, all sample points are used to train the model.}
 
-\item{percent_cores}{The percent of cores you'd like to use for modeling and tuning (default is 50).}
+\item{tune}{Boolean. Defines whether or not you would like to tune the model's hyperparameters (mtry, min.node.size, and sample.fraction) using the \code{tuneRanger()} function.}
+
+\item{num_cores}{Numeric. Defines the number of cores you would like to use for parallel processing. Defaults to half of the cores on your machine.}
 }
 \value{
-If cross_validate is FALSE, returns a random forest. If cross_validate is TRUE, returns a list where [\link{1}] is a ataframe with predictions column indicating predictions made by the model and [\link{2}] is the trained random forest model.
+A list with three items: (1) \code{df_pred_obs} is a data.frame containing model predictions vs true VI observations; (2) \code{ranger_mod} is a ranger model generated from the full dataset; and (3) \code{perf_mets} is a list containing basic model performance metrics comparing the predicted vs. observed VI values.
 }
 \description{
-Models VI froma dataframe that includes predictor values.
+The fifth suggested function in the VisiMod workflow, folowing (1) \code{prep_dems()}, (2) \code{gen_pts()}, (3) \code{calculate_vi()}, and (4) \code{gen_preds()}. This function models the visibility index (VI) using random forests, driven by a data.frame containing sample points with known VI values (response variable), derived from viewshed analysis, and a suite of point-level predictor variables aimed at capturing the dominant landscape controls of visibility in a wildland (undeveloped) environment. It relies on the efficient, parallelized implementation of random forests from the ranger library, and provides the capacity to undergo an automatic tuning process provided by the tuneRanger library. The user can specify whether to perform a 4-fold spatial cross-validation procedure, or to simply use all of the input data to train the model.
+}
+\details{
+\itemize{
+\item The model will use all columns in \code{df}, except 'x' and 'y', to build a predictive model. So, if your data.frame contains additional columns (i.e., if you did not strictly follow the recommended VisiMod function sequence to arrive at a set of sample points), you should either (a) know that these columns will be included as potential predictors of VI; or (b) remove them prior to running the function
+\item If you opted to generate VI estimates at multiple viewing distances in the \code{calculate_vi()} step, your data.frame will likely have multiple 'vi_x' columns, where x is equal to one or more 'vi_rad' values. However, this function can only be used to model one viewing radius at a time, that you specify with \code{vi_rad}. If other VI columns are present, they will be automatically removed prior to modeling.
+\item Note that the cross-validation procedure defined by \code{cross_validate} uses a simple extent-based approach to split the study area up into four quadrants. It takes the study area's extent, finds the vertical and horizontal midpoints of that extent, creates four equally sized rectangles, and determines which points fall in each rectangle. If your study area is rectangular, you can expect that a similar number of points will fall in each of the four spatial folds, with minor variation occurring due to the assumed randomness of the initial point placement driven by \code{gen_pts()}. However, if your study area is not rectangular, it is possible that the points may be very unevenly distributed throughout the folds. It is even possible that one or more folds could contain no points, in extreme cases. In situations like this, if cross-validation is desired, it is recommended to carry out your own cross-validation procedure.
+\item The \code{ranger()} function upon which this modeling procedure is based will not run successfully with the presence of NA values in either the response variable or any of the predictor variables. By default, \code{model_vi()} removes rows with NAs prior to modeling. Users should either (a) be sure that no NAs are present within \code{df} prior to modeling; or (b) understand that the number of sample points used in the modeling procedure may be less than the total number of input points if NAs are present.
+}
 }
 \examples{
 # get your dtm and dsm
 dsm <- rast("dsm.tif")
 dtm <- rast("dtm.tif")
 
+# check dtm and dsm
+pd <- prep_dems(dtm, dsm, "C:/temp/dtm_filled.tif", "C:/temp/dsm_filled.tif")
+
 # get your points
 my_points <- generate_pts(dtm, dsm, 100, 1000)
 
 # calculate vi
-df <- calculate_vi(dtm, dsm, my_points, "omnidir", 500)
+my_points <- calculate_vi(dtm, dsm, my_points, "directional_single", c(500, 1000), 90, 90, 4L, 5L)
 
 # generate predictors
-df_preds <- gen_preds(dtm, dsm, df, "omnidir", save = FALSE)
-
-# merge dataframes so predictors and vi values are together
-df_all <- merge(df, df_preds, by=c("x", "y"))
+preds <- gen_preds(dtm, dsm, my_points, "directional_single", 90, 90, T, "C:/temp")
 
 # model
-mod <- model_vi(df_all, TRUE, FALSE, 80)
-
-# print the aggregate model results
-print(mod[[2]])
+mod <- model_vi(preds, 500, T, T, 5L)
 }

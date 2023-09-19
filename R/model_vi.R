@@ -1,314 +1,273 @@
 #' Model VI using a random forest
 #'
-#' Models VI froma dataframe that includes predictor values.
-#' @param df dataframe with predictor variables, target vi values, and an 'x' and 'y' column with coordinates
-#' @param cross_validate default is FALSE. True will execute a 4 fold spatial cross validation. False will train on all available points. If true, the predictions that are returned are predictions for folds made by models build excluding the respective fold. For example, predictions made on fold one are generated from models built using folds 2, 3, and 4.
-#' @param tune default is FALSE. TRUE will tune a full model and use tuned hyperparameters (mtry, minimum node size, sample fraction) for modeling.
-#' @param percent_cores The percent of cores you'd like to use for modeling and tuning (default is 50).
-#' @return If cross_validate is FALSE, returns a random forest. If cross_validate is TRUE, returns a list where [[1]] is a ataframe with predictions column indicating predictions made by the model and [[2]] is the trained random forest model.
+#' The fifth suggested function in the VisiMod workflow, folowing (1) `prep_dems()`, (2) `gen_pts()`, (3) `calculate_vi()`, and (4) `gen_preds()`. This function models the visibility index (VI) using random forests, driven by a data.frame containing sample points with known VI values (response variable), derived from viewshed analysis, and a suite of point-level predictor variables aimed at capturing the dominant landscape controls of visibility in a wildland (undeveloped) environment. It relies on the efficient, parallelized implementation of random forests from the ranger library, and provides the capacity to undergo an automatic tuning process provided by the tuneRanger library. The user can specify whether to perform a 4-fold spatial cross-validation procedure, or to simply use all of the input data to train the model.
+#' @details
+#' * The model will use all columns in `df`, except 'x' and 'y', to build a predictive model. So, if your data.frame contains additional columns (i.e., if you did not strictly follow the recommended VisiMod function sequence to arrive at a set of sample points), you should either (a) know that these columns will be included as potential predictors of VI; or (b) remove them prior to running the function
+#' * If you opted to generate VI estimates at multiple viewing distances in the `calculate_vi()` step, your data.frame will likely have multiple 'vi_x' columns, where x is equal to one or more 'vi_rad' values. However, this function can only be used to model one viewing radius at a time, that you specify with `vi_rad`. If other VI columns are present, they will be automatically removed prior to modeling.
+#' * Note that the cross-validation procedure defined by `cross_validate` uses a simple extent-based approach to split the study area up into four quadrants. It takes the study area's extent, finds the vertical and horizontal midpoints of that extent, creates four equally sized rectangles, and determines which points fall in each rectangle. If your study area is rectangular, you can expect that a similar number of points will fall in each of the four spatial folds, with minor variation occurring due to the assumed randomness of the initial point placement driven by `gen_pts()`. However, if your study area is not rectangular, it is possible that the points may be very unevenly distributed throughout the folds. It is even possible that one or more folds could contain no points, in extreme cases. In situations like this, if cross-validation is desired, it is recommended to carry out your own cross-validation procedure.
+#' * The `ranger()` function upon which this modeling procedure is based will not run successfully with the presence of NA values in either the response variable or any of the predictor variables. By default, `model_vi()` removes rows with NAs prior to modeling. Users should either (a) be sure that no NAs are present within `df` prior to modeling; or (b) understand that the number of sample points used in the modeling procedure may be less than the total number of input points if NAs are present.
+#' 
+#' @param df data.frame. Should contain 'x' and 'y' columns (resulting from `gen_pts()`), a 'vi' column (resulting from `calculate_vi()`), and several predictor columns (resulting from `gen_preds()`). See Details for information on the presence of additional columns in your data.frame.
+#' @param vi_rad Numeric. Defines the radius at which you intend to model VI. This value should match at least one of those used in the execution of `calculate_vi()`, and as a result, there should be a column in `df` named `vi_x` where `x == vi_rad`.
+#' @param cross_validate Boolean. Defines whether or not you would like to perform a 4-fold spatial cross-validation procedure to assess model performance. If TRUE, the sample points are split into four equally-sized, extent-based spatial quadrants, and models are iteratively trained using points from 3/4 of the quadrants and applied to the prediction of the fourth. If FALSE, all sample points are used to train the model.
+#' @param tune Boolean. Defines whether or not you would like to tune the model's hyperparameters (mtry, min.node.size, and sample.fraction) using the `tuneRanger()` function.
+#' @param num_cores Numeric. Defines the number of cores you would like to use for parallel processing. Defaults to half of the cores on your machine.
+#' @return A list with three items: (1) `df_pred_obs` is a data.frame containing model predictions vs true VI observations; (2) `ranger_mod` is a ranger model generated from the full dataset; and (3) `perf_mets` is a list containing basic model performance metrics comparing the predicted vs. observed VI values.
 #'
 #' @export
 #' @examples
 #' # get your dtm and dsm
 #' dsm <- rast("dsm.tif")
 #' dtm <- rast("dtm.tif")
-#'
+#' 
+#' # check dtm and dsm
+#' pd <- prep_dems(dtm, dsm, "C:/temp/dtm_filled.tif", "C:/temp/dsm_filled.tif")
+#' 
 #' # get your points
 #' my_points <- generate_pts(dtm, dsm, 100, 1000)
-#'
+#' 
 #' # calculate vi
-#' df <- calculate_vi(dtm, dsm, my_points, "omnidir", 500)
-#'
+#' my_points <- calculate_vi(dtm, dsm, my_points, "directional_single", c(500, 1000), 90, 90, 4L, 5L)
+#' 
 #' # generate predictors
-#' df_preds <- gen_preds(dtm, dsm, df, "omnidir", save = FALSE)
-#'
-#' # merge dataframes so predictors and vi values are together
-#' df_all <- merge(df, df_preds, by=c("x", "y"))
+#' preds <- gen_preds(dtm, dsm, my_points, "directional_single", 90, 90, T, "C:/temp")
 #' 
 #' # model
-#' mod <- model_vi(df_all, TRUE, FALSE, 80)
-#'
-#' # print the aggregate model results
-#' print(mod[[2]])
+#' mod <- model_vi(preds, 500, T, T, 5L)
 
-
-model_vi <- function(df, cross_validate = FALSE, tune = FALSE, percent_cores = 50){
-  # first thing check for column names
-  contains_vi <- FALSE
-  num_vi_cols <- 0
+model_vi <- function(df, vi_rad, cross_validate = FALSE, tune = FALSE, num_cores = floor(parallel::detectCores()/2)){
+  
+  # print message
+  message(paste0(Sys.time(), " model_vi() has begun"))
+  
+  # check for presence of x and y columns -- needed if cross_validate == T
   contains_xy <- FALSE
-  for (colname in colnames(df)){
-    if(grepl("vi_", colname)){
-      contains_vi <- TRUE
-      num_vi_cols <- num_vi_cols + 1
-    }
-  }
-  if ("x" %in% colnames(df) & "y" %in% colnames(df)){
+  if ("x" %in% colnames(df) & "y" %in% colnames(df)) {
     contains_xy <- TRUE
   }
-
-  if(contains_vi==TRUE & contains_xy==TRUE){
-    if (num_vi_cols>1){
-      stop("Input dataframe must only contain one 'vi_x' column, please remove additional or format accordingly (where x = vi radius).")
-    }
-    print("A column name contains vi, using that as target variable")
+  if (contains_xy == FALSE & cross_validate == TRUE) {
+    stop("Input data.frame must contain separate 'x' and 'y' columns with coordinates for spatial cross-validation.")
   }
-  if (contains_vi ==FALSE){
-    stop("Input dataframe must contain a column with 'vi_x' to serve as the target for modeling. Please format accordinly (where x = vi radius).")
+  
+  # check for presence of distance-specific vi column defined by vi_rad
+  vi_col <- paste0("vi_", vi_rad)
+  if (!vi_col %in% colnames(df)){
+    stop("A vi column at the specified vi_rad ('vi_", vi_rad, "') does not exist within df")
   }
-
-  if(contains_xy ==FALSE & cross_validate==TRUE){
-    stop("Input dataframe must contain separate 'x' and 'y' columns with coordinates for spatial cross-validation.")
+  
+  # remove other vi columns, if present, to avoid including them in the model
+  oth_vi_cols <- colnames(df)[grep("vi_", colnames(df))]
+  oth_vi_cols <- oth_vi_cols[oth_vi_cols != vi_col]
+  if (length(oth_vi_cols) > 0){
+    keep_cols <- colnames(df)[!colnames(df) %in% oth_vi_cols]
+    df <- df[,keep_cols]
   }
-
-  # get your vi column name & rename for use in ranger formula
-  vi_col_num <- grep("vi_", colnames(df), ignore.case = TRUE)
-  colnames(df)[vi_col_num] <- "vi"
-
-  # remove any nas
-  df <- df %>%
-    na.omit()
-
+  
   # if azimuth is a column remove that too
   if ("azimuth" %in% colnames(df)){
-    df <- df %>%
+    df <- df |>
       dplyr::select(-c(azimuth))
   }
+  
+  # get your vi column name & rename for use in ranger formula
+  colnames(df)[colnames(df) == vi_col] <- "vi"
 
-  # get your cores
-  useCores <- floor(parallel::detectCores() * (percent_cores/100))
-  if (useCores<1){
-    stop("Too few cores selected, please increase the percentage of cores used (values between 0-100) must result in at least one core.")
-  }
+  # remove any nas
+  df <- df |> na.omit()
 
+  #----------------------modeling without cross-validation
+  
   if (cross_validate == FALSE){
-    if(contains_xy==TRUE){
-      df <- df %>%
-        dplyr::select(-c(x,y))
-    }
-    rf_all <- ranger::ranger(formula = vi~., data= df, importance = "permutation", num.threads = useCores)
-    if(tune ==TRUE){
-      #tune by making task, tuning, and getting tune vars
-      rf_task <- tuneRanger::makeRegrTask(data = df, target = "vi")
-      tuned <- tuneRanger::tuneRanger(rf_task, num.threads = useCores)
+    
+    # print message
+    message(paste0(Sys.time(), " modeling without cross-validation"))
+    
+    # remove x and y columns, since they're not needed without cv
+    if(contains_xy == TRUE) df_noxy <- df |> dplyr::select(-c(x,y))
+    
+    #-------------------with tuning
+    
+    if(tune == TRUE){
+      
+      # tune by making task, tuning, and getting tune vars
+      message(paste0(Sys.time(), " tuning the model"))
+      rf_task <- mlr::makeRegrTask(data = df_noxy, target = "vi")
+      tuned <- tuneRanger::tuneRanger(rf_task, num.threads = num_cores,
+                                      show.info = getOption("mlrMBO.show.info", F))
       mtry_val <- tuned$recommended.pars$mtry
       min_node_val <- tuned$recommended.pars$min.node.size
       sample_fraction_val <- tuned$recommended.pars$sample.fraction
+      
+      # build full model
+      message(paste0(Sys.time(), " building the full model"))
+      rf_all <- ranger::ranger(formula = vi ~ ., data = df_noxy, 
+                               mtry = mtry_val, importance = "permutation", 
+                               min.node.size = min_node_val, sample.fraction = sample_fraction_val, 
+                               num.threads = num_cores)
+    
+    #-------------------without tuning
 
-      rf <- ranger::ranger(formula = vi~., data= df, mtry = mtry_val, importance = "permutation", min.node.size = min_node_val, sample.fraction = sample_fraction_val, num.threads = useCores)
-      return(rf)
     } else {
-      #final rf is that one
-      rf <- rf_all
-      return(rf)
+      
+      # build full model
+      message(paste0(Sys.time(), " building the full model"))
+      rf_all <- ranger::ranger(formula = vi ~ ., data = df_noxy, 
+                               importance = "permutation", num.threads = num_cores)
+      
     }
+    
+    # compare predictions vs. observations
+    message(paste0(Sys.time(), " assessing model performance"))
+    predictions <- rf_all$predictions
+    df_pred_obs <- data.frame(observed = df_noxy$vi,
+                              predicted = predictions)
+    
+    # get performance metrics and put them in a list
+    lm <- lm(predicted ~ observed, df_pred_obs)
+    rmse <- Metrics::rmse(df_pred_obs[, "observed"], df_pred_obs[, "predicted"])
+    nrmse <- rmse/(max(df_pred_obs[, "observed"]) - min(df_pred_obs[, "predicted"]))
+    r2 <- summary(lm)$adj.r.squared
+    perf_mets <- list(r2 = r2, rmse = rmse, nrmse = nrmse)
+    
+    # return pred vs. obs, the full model, and the performance metrics
+    message(paste0(Sys.time(), " model_vi() is complete"))
+    return(list(df_pred_obs = df_pred_obs, ranger_mod = rf_all, perf_mets = perf_mets))
+    
   }
+  
+  #----------------------modeling with cross-validation
+  
   if (cross_validate == TRUE){
-    df_cv <- df # df_cv will retain fold info, df will not
+    
+    # print message
+    message(paste0(Sys.time(), " modeling with cross-validation"))
+    
+    # create copy of df (df_cv will retain fold info, df will not)
+    df_cv <- df 
+    
     # get midpoints for spatial cv
     mid_x <- ((max(df$x) + min(df$x))/2)
     mid_y <- ((max(df$y) + min(df$y))/2)
-    ## assign folds
-    df_cv$fold <- 0
-    ## fold 1: < x & > y (top left)
-    df_cv$fold[df_cv$x < mid_x & df_cv$y > mid_y] <- "1"
-    ## fold 2: > x & > y (top right)
-    df_cv$fold[df_cv$x > mid_x & df_cv$y > mid_y] <- "2"
-    ## fold 3: < x & < y (bottom left)
-    df_cv$fold[df_cv$x < mid_x & df_cv$y < mid_y] <- "3"
-    ## fold 4: > x & < y (bottom right)
-    df_cv$fold[df_cv$x > mid_x & df_cv$y < mid_y] <- "4"
+    
+    # assign folds
+    df_cv$fold <- NA
+    df_cv$fold[df_cv$x < mid_x & df_cv$y >= mid_y] <- 1
+    df_cv$fold[df_cv$x >= mid_x & df_cv$y >= mid_y] <- 2
+    df_cv$fold[df_cv$x < mid_x & df_cv$y < mid_y] <- 3
+    df_cv$fold[df_cv$x >= mid_x & df_cv$y < mid_y] <- 4
 
-    # plot this to show whats going on
-    p1 <- ggplot(data = df_cv, aes(x = x, y = y, color = fold)) +
-      geom_point() + geom_hline(yintercept = mid_y) + geom_vline(xintercept = mid_x) +
-      ggtitle("Folds used for spatial cross-validation")+
-      theme(panel.grid.major = element_line(colour = "grey70", linetype = "dashed", linewidth=0.5),
-            panel.grid.minor = element_blank(),
-            panel.background = element_rect(color = NA, fill = NA),
-            panel.border = element_rect(colour = "black", fill=NA, linewidth=1))
-    print(p1)
-
+    # plot the points to show spatial folds
+    par(mar = c(5,5,1,1), las = 1)
+    plot(df_cv$x / 1000, df_cv$y / 1000, pch = 16, 
+         col = df_cv$fold, xlab = "x (km)", ylab = "y (km)")
+    grid()
+    abline(h = mid_y / 1000)
+    abline(v = mid_x / 1000)
+    legend("topleft", "Fold 1", bty = "n", cex = 1.5, x.intersp = 0)
+    legend("topright", "Fold 2", bty = "n", cex = 1.5, x.intersp = 0)
+    legend("bottomleft", "Fold 3", bty = "n", cex = 1.5, x.intersp = 0)
+    legend("bottomright", "Fold 4", bty = "n", cex = 1.5, x.intersp = 0)
+  
+    # remove x and y cols and rows with nas
+    df_noxy <- df |> dplyr::select(-c(x, y))
+    df_cv <- df_cv |> dplyr::select(-c(x, y))
+    
+    #-------------------full model with tuning
+    
     if(tune==TRUE){
-      # remove xy to start the tune
-      df_noxy <- df %>%
-        dplyr::select(-c(x,y))
-      # model, tune, get hyperparams
-      rf_all <- ranger::ranger(formula = vi~., data= df_noxy, importance = "permutation", num.threads = useCores)
-      rf_task <- makeRegrTask(data = df, target = "vi")
-      tuned <- tuneRanger(rf_task, num.threads = useCores)
+      
+      # tune by making task, tuning, and getting tune vars
+      message(paste0(Sys.time(), " tuning the model"))
+      rf_task <- mlr::makeRegrTask(data = df_cv, target = "vi")
+      tuned <- tuneRanger::tuneRanger(rf_task, num.threads = num_cores,
+                                      show.info = getOption("mlrMBO.show.info", F))
       mtry_val <- tuned$recommended.pars$mtry
       min_node_val <- tuned$recommended.pars$min.node.size
       sample_fraction_val <- tuned$recommended.pars$sample.fraction
-
-      # then do everything in the else statment but using hyperparams
-      df_cv <- df_cv %>%
-        dplyr::select(-c(x,y))
-      fold1 <- df_cv[df_cv$fold=="1",]
-      fold2 <- df_cv[df_cv$fold=="2",]
-      fold3 <- df_cv[df_cv$fold=="3",]
-      fold4 <- df_cv[df_cv$fold=="4",]
-
-      # fold 1
-      # 1: need to remove fold for modeling
-      test1_df <- fold1 %>%
-        dplyr::select(-c(fold)) %>%
-        na.omit()
-      train <- rbind(fold2, fold3, fold4)
-      train_df <- train %>%
-        dplyr::select(-c(fold)) %>%
-        na.omit()
-
-      rf1 <- ranger::ranger(formula = vi~., data= train_df, mtry = mtry_val, importance = "permutation", min.node.size = min_node_val, sample.fraction = sample_fraction_val, num.threads = useCores)
-      predictions1 <- predict(rf1, test1_df, num.threads = useCores)
-      test1_df$predictions <- predictions1$predictions
-
-      # fold 2
-      test2_df <- fold2 %>%
-        dplyr::select(-c(fold)) %>%
-        na.omit()
-      train <- rbind(fold1, fold3, fold4)
-      train_df <- train %>%
-        dplyr::select(-c(fold)) %>%
-        na.omit()
-
-      rf2 <- ranger::ranger(formula = vi~., data= train_df, mtry = mtry_val, importance = "permutation", min.node.size = min_node_val, sample.fraction = sample_fraction_val, num.threads = useCores)
-      predictions2 <- predict(rf2, test2_df, num.threads = useCores)
-      test2_df$predictions <- predictions2$predictions
-
-      # fold 3
-      test3_df <- fold3 %>%
-        dplyr::select(-c(fold)) %>%
-        na.omit()
-      train <- rbind(fold2, fold1, fold4)
-      train_df <- train %>%
-        dplyr::select(-c(fold)) %>%
-        na.omit()
-
-      rf3 <- ranger::ranger(formula = vi~., data= train_df, mtry = mtry_val, importance = "permutation", min.node.size = min_node_val, sample.fraction = sample_fraction_val, num.threads = useCores)
-      predictions3 <- predict(rf3, test3_df, num.threads = useCores)
-      test3_df$predictions <- predictions3$predictions
-
-      # fold 4
-      test4_df <- fold3 %>%
-        dplyr::select(-c(fold)) %>%
-        na.omit()
-      train <- rbind(fold2, fold1, fold3)
-      train_df <- train %>%
-        dplyr::select(-c(fold)) %>%
-        na.omit()
-
-      rf4 <- ranger::ranger(formula = vi~., data= train_df, mtry = mtry_val, importance = "permutation", min.node.size = min_node_val, sample.fraction = sample_fraction_val, num.threads = useCores)
-      predictions4 <- predict(rf4, test4_df, num.threads = useCores)
-      test4_df$predictions <- predictions4$predictions
-
-      # combine all your tests
-      all_test <- rbind(test1_df,test2_df, test3_df, test4_df)
-
-      # get your test stats
-      lm <- lm(predictions ~ vi, all_test)
-      rmse <- rmse(all_test[,"vi"], all_test[,"predictions"])
-      nrmse <- rmse/(max(all_test[,"vi"])-min(all_test[,"vi"]))
-      r2 <- summary(lm)$r.squared
-
-      # run the full model too
-      df_noxy <- df %>%
-        dplyr::select(-c(x,y))
-      rf_all <- ranger::ranger(formula = vi~., data= df, mtry = mtry_val, importance = "permutation", min.node.size = min_node_val, sample.fraction = sample_fraction_val, num.threads = useCores)
-
-      # return df with predictions, R2 and RMSE of test preds, and full rf
-      prnt_stmt <- paste0("The cross-validated, tuned model had an R squared of ", as.character(round(r2,2)),
-                          "and an nRMSE of ", as.character(round(nrmse,2)), ".",
-                          " Based on the test predictions from each quadrant.")
-      print(prnt_stmt)
-      return(list(all_test, rf_all))
-
+      
+      # build full model
+      message(paste0(Sys.time(), " building the full model"))
+      rf_all <- ranger::ranger(formula = vi ~ ., data = df_noxy, 
+                               mtry = mtry_val, importance = "permutation", 
+                               min.node.size = min_node_val, sample.fraction = sample_fraction_val, 
+                               num.threads = num_cores)
+      
+    #-------------------full model without tuning
 
     } else {
-      # just do your 4 folds
-      # remove xy to start the modeling
-      df_cv <- df_cv %>%
-        dplyr::select(-c(x,y))
-      fold1 <- df_cv[df_cv$fold=="1",]
-      fold2 <- df_cv[df_cv$fold=="2",]
-      fold3 <- df_cv[df_cv$fold=="3",]
-      fold4 <- df_cv[df_cv$fold=="4",]
-
-      # fold 1
-      # 1: need to remove fold for modeling
-      test1_df <- fold1 %>%
-        dplyr::select(-c(fold)) %>%
-        na.omit()
-      train <- rbind(fold2, fold3, fold4)
-      train_df <- train %>%
-        dplyr::select(-c(fold)) %>%
-        na.omit()
-
-      rf1 <- ranger::ranger(formula = vi~., data= train_df, importance = "permutation", num.threads = useCores)
-      predictions1 <- predict(rf1, test1_df, num.threads = useCores)
-      test1_df$predictions <- predictions1$predictions
-
-      # fold 2
-      test2_df <- fold2 %>%
-        dplyr::select(-c(fold)) %>%
-        na.omit()
-      train <- rbind(fold1, fold3, fold4)
-      train_df <- train %>%
-        dplyr::select(-c(fold)) %>%
-        na.omit()
-
-      rf2 <- ranger::ranger(formula = vi~., data= train_df, importance = "permutation", num.threads = useCores)
-      predictions2 <- predict(rf2, test2_df, num.threads = useCores)
-      test2_df$predictions <- predictions2$predictions
-
-      # fold 3
-      test3_df <- fold3 %>%
-        dplyr::select(-c(fold)) %>%
-        na.omit()
-      train <- rbind(fold2, fold1, fold4)
-      train_df <- train %>%
-        dplyr::select(-c(fold)) %>%
-        na.omit()
-
-      rf3 <- ranger::ranger(formula = vi~., data= train_df, importance = "permutation", num.threads = useCores)
-      predictions3 <- predict(rf3, test3_df, num.threads = useCores)
-      test3_df$predictions <- predictions3$predictions
-
-      # fold 4
-      test4_df <- fold3 %>%
-        dplyr::select(-c(fold)) %>%
-        na.omit()
-      train <- rbind(fold2, fold1, fold3)
-      train_df <- train %>%
-        dplyr::select(-c(fold)) %>%
-        na.omit()
-
-      rf4 <- ranger::ranger(formula = vi~., data= train_df, importance = "permutation", num.threads = useCores)
-      predictions4 <- predict(rf4, test4_df, num.threads = useCores)
-      test4_df$predictions <- predictions4$predictions
-
-      # combine all your tests
-      all_test <- rbind(test1_df,test2_df, test3_df, test4_df)
-
-      # get your test stats
-      lm <- lm(predictions ~ vi, all_test)
-      rmse <- rmse(all_test[,"vi"], all_test[,"predictions"])
-      nrmse <- rmse/(max(all_test[,"vi"])-min(all_test[,"vi"]))
-      r2 <- summary(lm)$r.squared
-
-      # run the full model too
-      df_noxy <- df %>%
-        dplyr::select(-c(x,y, fold))
-      rf_all <- ranger::ranger(formula = vi~., data= df_noxy, importance = "permutation", num.threads = useCores)
-
-      # return df with predictions, R2 and RMSE of test preds, and full rf
-      prnt_stmt <- paste0("The cross-validated model had an R squared of ", as.character(round(r2,2)),
-                          " and an nRMSE of ", as.character(round(nrmse,2)), ". ",
-                          " Based on the test predictions from each quadrant.")
-      print(prnt_stmt)
-      return(list(all_test, rf_all))
+      
+      # build full model
+      message(paste0(Sys.time(), " building the full model"))
+      rf_all <- ranger::ranger(formula = vi ~ ., data = df_noxy, 
+                               importance = "permutation", num.threads = num_cores)
+      
     }
+    
+    # loop through folds for cv
+    for (fold in seq(1,4)){
+      
+      # print message
+      message(paste0(Sys.time(), " modeling fold #", fold))
+      
+      # define training and validation data
+      train_df <- df_cv[df_cv$fold != fold,]
+      valid_df <- df_cv[df_cv$fold == fold,]
+      
+      #-----------------cv model with tuning
+      
+      if (tune == TRUE){
+        
+        # build model
+        rf <- ranger::ranger(formula = vi ~ ., data = train_df, 
+                             mtry = mtry_val, importance = "permutation", 
+                             min.node.size = min_node_val, sample.fraction = sample_fraction_val, 
+                             num.threads = num_cores)
+        
+        # compare predictions vs. observations
+        predictions <- predict(rf, valid_df, num.threads = num_cores)$predictions
+        df_pred_obs_fold <- data.frame(observed = valid_df$vi,
+                                       predicted = predictions)
+        
+      #-----------------cv model without tuning
+        
+      } else {
+        
+        # build model
+        rf <- ranger::ranger(formula = vi ~ ., data = train_df, 
+                             importance = "permutation", num.threads = num_cores)
+        predictions <- predict(rf, valid_df, num.threads = num_cores)$predictions
 
+        # compare predictions vs. observations
+        df_pred_obs_fold <- data.frame(observed = valid_df$vi,
+                                       predicted = predictions)
+        
+      }
+      
+      # compile predictions vs. observations among folds
+      if (fold == 1){
+        
+        df_pred_obs <- df_pred_obs_fold
+        
+      } else {
+        
+        df_pred_obs <- rbind(df_pred_obs, df_pred_obs_fold)
+        
+      }
+      
+    }
+    
+    # get performance metrics and put them in a list
+    message(paste0(Sys.time(), " assessing model performance"))
+    lm <- lm(predicted ~ observed, df_pred_obs)
+    rmse <- Metrics::rmse(df_pred_obs[, "observed"], df_pred_obs[, "predicted"])
+    nrmse <- rmse/(max(df_pred_obs[, "observed"]) - min(df_pred_obs[, "predicted"]))
+    r2 <- summary(lm)$adj.r.squared
+    perf_mets <- list(r2 = r2, rmse = rmse, nrmse = nrmse)
+    
+    # return pred vs. obs, the full model, and the performance metrics
+    message(paste0(Sys.time(), " model_vi() is complete"))
+    return(list(df_pred_obs = df_pred_obs, ranger_mod = rf_all, perf_mets = perf_mets))
+  
   }
 
 }
