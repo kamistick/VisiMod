@@ -4,14 +4,24 @@
 \alias{calculate_vi}
 \title{Calculate visibility index at points}
 \usage{
-calculate_vi(dtm, dsm, pts, vi_type, vi_rad, vi_fov = 180, vi_azi = 0)
+calculate_vi(
+  dtm,
+  dsm,
+  pts,
+  vi_type,
+  vi_rad,
+  vi_fov = 180,
+  vi_azi = 0,
+  cores = floor(parallel::detectCores()/2),
+  n_retry = 5L
+)
 }
 \arguments{
 \item{dtm}{SpatRaster. Digital terrain model at finest resolution available.}
 
 \item{dsm}{SpatRaster. Digital surface model at finest resolution available.}
 
-\item{pts}{dataframe.  The point locations for which vi will be calculated. At a minimum, 'x' and 'y' columns are required. An 'azimuth' column is required if vi_type == 'directional_random'.}
+\item{pts}{data.frame.  The point locations for which vi will be calculated. At a minimum, 'x' and 'y' columns are required. An 'azimuth' column is required if vi_type == 'directional_random'.}
 
 \item{vi_type}{Character. Defines which type of VI calculation you would like to conduct. One of: "omnidir" (omnidirectional, 360 degree), "directional_single" (a single specified view direction for each point), "directional_random" (viewing directions will be randomly assigned to each point).}
 
@@ -20,18 +30,24 @@ calculate_vi(dtm, dsm, pts, vi_type, vi_rad, vi_fov = 180, vi_azi = 0)
 \item{vi_fov}{Numeric. Defines the angular field of view, in degrees, of the directional wedge used for the VI calculation. Only used if vi_type == "directional_single" | vi_type == "directional_random". Values must be > 0 and < 360.}
 
 \item{vi_azi}{Numeric. Defines the azimuth, or central viewing direction, in degrees, of the directional wedge used for VI calculation.  Only used if vi_type == "directional_single" | vi_type == "directional_random". Values must be 0-360.}
+
+\item{cores}{Numeric. Defines the number of cores you would like to use for parallel processing. Defaults to half of the cores on your machine.}
+
+\item{n_retry}{Numeric. Defines the number of times you would like to attempt to retry a VI calculation before omitting the point from further analysis. See Details.}
 }
 \value{
-data.frame with columns 'x', 'y', 'vi_x' for x in vi_rad, and 'azimuth' if vi_type = 'directional_random'
+data.frame with columns 'x', 'y', 'vi_x' for x in vi_rad, and 'azimuth' if \code{vi_type} == 'directional_random'
 }
 \description{
-Function that uses both a digital terrain model (DTM) and digital surface model (DSM) to calculate the visibility index (VI) from a series of point locations. VI represents the proportion of area visible from a given point relative to the total area within a viewing distance of interest, ranging from 0 (no visibility) to 1 (complete visibility). This function enables the calculation of omnidirectional VI (in 360 degrees surrounding each point) or directional VI (within a viewing "wedge" defined by an azimuth and angular field of view). Directional visibility can be calculated in two ways: (1) in a singular, specific viewing direction/azimuth; or (2) with each point having a randomly assigned viewing direction/azimuth. The former is more useful for building VI predictive models in a singular direction; the latter can be used to build directionally independent models that can be applied for the prediction of visibility in any direction. Irrespective of the VI type, users define one or more distances or viewing radii within which VI is calculated. VI values are appended to input points are intended for use as training and validation in the VisiMod visibility modeling workflow.
+The third suggested function in the VisiMod workflow, following (1) \code{prep_dems()} and (2) \code{gen_pts()}. Function that uses both a digital terrain model (DTM) and digital surface model (DSM) to calculate the visibility index (VI) from a series of point locations. VI represents the proportion of area visible from a given point relative to the total area within a viewing distance of interest, ranging from 0 (no visibility) to 1 (complete visibility). This function enables the calculation of omnidirectional VI (in 360 degrees surrounding each point) or directional VI (within a viewing "wedge" defined by an azimuth and angular field of view). Directional visibility can be calculated in two ways: (1) in a singular, specific viewing direction/azimuth; or (2) with each point having a randomly assigned viewing direction/azimuth. The former is more useful for building VI predictive models in a singular direction; the latter can be used to build directionally independent models that can be applied for the prediction of visibility in any direction. Irrespective of the VI type, users define one or more distances or viewing radii within which VI is calculated. VI values are appended to input points are intended for use as training and validation in the VisiMod visibility modeling workflow.
 }
 \details{
 \itemize{
 \item \code{dtm} and \code{dsm} SpatRasters can be defined using the terra library. They should have the same coordinate system, resolution, extent, and origin.
 \item \code{pts} can be defined using the \code{gen_pts()} function within the VisiMod library. But, they can also be created through many other means. For example, one could derive a data.frame of x-y coordinate pairs from a SpatVector using \code{terra::crds()} or from an sf object using \code{sf::st_coordinates()}. However, using \code{gen_pts()} is advantageous, as it ensures that points are (1) in the same coordinate system as \code{dtm} and \code{dsm}; and (2) are at least \code{vi_rad} from the edge of the study area.
 \item \code{vi_rad} should not exceed the \code{max_vis_dist} defined in the previous \code{gen_pts()} step in the VisiMod workflow. \code{vi_rad} will affect processing time quite dramatically. As distance increases, processing time will increase exponentially.
+\item Note that this function is parallelized and can leverage as many cores as your computer has available to speed up processing. As with all parallel processing in R, however, there is an overhead cost associated with setting up parallel operations. So, for small numbers of input points (\code{pts}) and/or short viewing radii (\code{view_rad}), using many cores may not speed up your processing significantly.
+\item Due to the parallel nature of this algorithm, there are rare situations in which errors occur in the calculation of VI from one (or more) of the input \code{pts}. We hypothesize that this may be the result of the same \code{dtm} and \code{dsm} being read into several cores at once, causing a conflict. In testing, we have found that by simply retrying a calculation one or more times, the errors can be resolved. The function argument \code{n_retry} enables the user to define how many times the calculation should be attempted on a point that returns an error before simply omitting it from further consideration. If the error persists, note that the number of inputs \code{pts} may not match the number of rows in the returned data.frame.
 }
 }
 \examples{
@@ -39,9 +55,12 @@ Function that uses both a digital terrain model (DTM) and digital surface model 
 dsm <- rast("dsm.tif")
 dtm <- rast("dtm.tif")
 
+# check dtm and dsm
+pd <- prep_dems(dtm, dsm, "C:/temp/dtm_filled.tif", "C:/temp/dsm_filled.tif")
+
 # get your points
 my_points <- generate_pts(dtm, dsm, 100, 1000)
 
 # calculate vi
-df <- calculate_vi(dtm, dsm, my_points, "omnidir", c(500, 1000))
+my_points <- calculate_vi(dtm, dsm, my_points, "directional_single", c(500, 1000), 90, 90, 4L, 5L)
 }

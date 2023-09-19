@@ -38,7 +38,7 @@
 #' # generate predictors
 #' preds <- gen_preds(dtm, dsm, my_points, "directional_single", 90, 90, T, "C:/temp")
 
-gen_preds_2 <- function(dtm, dsm, pts, vi_type, vi_fov=180, vi_azi=0, agg_fact = 10L,
+gen_preds <- function(dtm, dsm, pts, vi_type, vi_fov=180, vi_azi=0, agg_fact = 10L,
                         save = TRUE, save_dir = getwd()){
   
   # suppress progress bars
@@ -517,22 +517,4 @@ gen_preds_2 <- function(dtm, dsm, pts, vi_type, vi_fov=180, vi_azi=0, agg_fact =
   # print message
   message(paste0(Sys.time(), " Process completed"))
 
-}
-
-# TESTING
-dsm <- terra::rast("S:/ursa2/campbell/hvm_travel_rate/data/als/data/dsm_01m.tif")
-dtm <- terra::rast("S:/ursa2/campbell/hvm_travel_rate/data/als/data/dtm_01m.tif")
-pts <- VisiMod::gen_pts(dtm, dsm, 200, 400)
-pts <- VisiMod::calculate_vi(dtm,dsm, pts, "directional_single", 200, 90, 90)
-preds <- gen_preds_2(dtm, dsm, pts, "directional_single", vi_fov = 90, vi_azi = 90, save = T, save_dir = "S:/ursa2/campbell/visimod/data/gen_preds_testing")
-pts2 <- pts
-pts2$azimuth <- 90
-preds2 <- gen_preds_2(dtm, dsm, pts2, "directional_random", vi_fov = 90)
-
-for (col in colnames(preds$pred_pts)){
-  x <- preds$pred_pts[,col]
-  y <- preds2[,col]
-  print(col)
-  plot(y ~ x)
-  readline("enter")
 }
