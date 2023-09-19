@@ -4,14 +4,14 @@
 \alias{map_vi}
 \title{Map VI across a landscape}
 \usage{
-map_vi(mod, predictors, percent_threads)
+map_vi(mod, predictors, cores = floor(parallel::detectCores()/2))
 }
 \arguments{
-\item{mod}{random forest model}
+\item{mod}{ranger. A random forest model generated using \code{\link[ranger:ranger]{ranger::ranger()}}.}
 
-\item{predictors}{a multiband raster of all predictors}
+\item{predictors}{SpatRaster. A multiband SpatRaster of all predictors used for VI modeling.}
 
-\item{percent_threads}{percent of threads that should be used in prediction, default is 50.}
+\item{cores}{Numeric. Defines the number of cores you would like to use for parallel processing. Defaults to half of the cores on your machine.}
 }
 \description{
 This function takes in a model and a stack of predictor rasters and models VI across each pixel.
