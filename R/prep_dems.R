@@ -23,75 +23,75 @@ prep_dems <- function(in_dtm, in_dsm, out_dtm, out_dsm){
   #-------------------alignment
   
   # print message
-  message("Checking for spatial alignment between dtm and dsm...")
+  message(paste0(Sys.time(), " prep_dems() has begun"))
+  message(paste0(Sys.time(), "   Checking for spatial alignment between dtm and dsm..."))
   
   # compare crs
   crs_dtm <- terra::crs(in_dtm)
   crs_dsm <- terra::crs(in_dsm)
   crs_comp <- crs_dtm == crs_dsm
-  if (crs_comp) message("  crs: match")
-  if (!crs_comp) message("  crs: do not match")
-
+  if (crs_comp) message(paste0(Sys.time(), "     crs: match"))
+  if (!crs_comp) message(paste0(Sys.time(), "     crs: do not match"))
+  
   # compare ext
   ext_dtm <- terra::ext(in_dtm)
   ext_dsm <- terra::ext(in_dsm)
   ext_comp <- ext_dtm == ext_dsm
-  if (ext_comp) message("  ext: match")
-  if (!ext_comp) message("  ext: do not match")
+  if (ext_comp) message(paste0(Sys.time(), "     ext: match"))
+  if (!ext_comp) message(paste0(Sys.time(), "     ext: do not match"))
   
   # compare nrow
   nrow_dtm <- terra::nrow(in_dtm)
   nrow_dsm <- terra::nrow(in_dsm)
   nrow_comp <- nrow_dtm == nrow_dsm
-  if (nrow_comp) message("  nrow: match")
-  if (!nrow_comp) message("  nrow: do not match")
+  if (nrow_comp) message(paste0(Sys.time(), "     nrow: match"))
+  if (!nrow_comp) message(paste0(Sys.time(), "     nrow: do not match"))
   
   # compare ncol
   ncol_dtm <- terra::ncol(in_dtm)
   ncol_dsm <- terra::ncol(in_dsm)
   ncol_comp <- ncol_dtm == ncol_dsm
-  if (ncol_comp) message("  ncol: match")
-  if (!ncol_comp) message("  ncol: do not match")
+  if (ncol_comp) message(paste0(Sys.time(), "     ncol: match"))
+  if (!ncol_comp) message(paste0(Sys.time(), "     ncol: do not match"))
   
   # compare res
   res_dtm <- terra::res(in_dtm)
   res_dsm <- terra::res(in_dsm)
   res_comp <- all(res_dtm == res_dsm)
-  if (res_comp) message("  res: match")
-  if (!res_comp) message("  res: do not match")
+  if (res_comp) message(paste0(Sys.time(), "     res: match"))
+  if (!res_comp) message(paste0(Sys.time(), "     res: do not match"))
   
   # compare origin
   origin_dtm <- terra::origin(in_dtm)
   origin_dsm <- terra::origin(in_dsm)
   origin_comp <- all(origin_dtm == origin_dsm)
-  if (origin_comp) message("  origin: match")
-  if (!origin_comp) message("  origin: do not match")
+  if (origin_comp) message(paste0(Sys.time(), "     origin: match"))
+  if (!origin_comp) message(paste0(Sys.time(), "     origin: do not match"))
   
   # compare all
   if (!(crs_comp & ext_comp & nrow_comp & ncol_comp & res_comp & origin_comp)){
-    stop("You must ensure spatial alignment of dtm and dsm before proceeding.")
+    stop("\nYou must ensure spatial alignment of dtm and dsm before proceeding.\n")
   } else {
-    message("  dtm and dsm are spatially aligned")
+    message(paste0(Sys.time(), "   dtm and dsm are spatially aligned"))
   }
   
   #-------------------linear units
-
+  
   # print message
-  message("Checking to make sure DTM/DSM coordinate system has linear units in meters...")
+  message(paste0(Sys.time(), "   Checking to make sure dtm/dsm coordinate system has linear units in meters..."))
   
   # check linear units
   units <- terra::linearUnits(in_dtm)
   if (!units == 1){
-    stop("You must ensure that your input dtm and dsm are in a projected coordinate system with linear units in meters (e.g., UTM)")  
+    stop("\nYou must ensure that your input dtm and dsm are in a projected coordinate system with linear units in meters (e.g., UTM).\n")  
   } else {
-    message("  dtm and dsm have suitable coordinate systems")
+    message(paste0(Sys.time(), "   dtm and dsm have suitable coordinate systems"))
   }
   
-  
   #-------------------interior NAs
-
+  
   # print message
-  message("Checking for interior NA values...")
+  message(paste0(Sys.time(), "   Checking for interior NA values..."))
   
   # create study area boundary
   sab <- terra::ifel(!is.na(in_dtm), 1, NA) |>
@@ -106,22 +106,22 @@ prep_dems <- function(in_dtm, in_dsm, out_dtm, out_dsm){
   na_count <- terra::freq(in_dtm, value = NA, zones = sab)$count
   while(na_count != 0){
     dtm_fill_flag <- T
-    message(paste0("  dtm has ", na_count, " NAs. Removing..."))
+    message(paste0(Sys.time(), "    dtm has ", na_count, " NAs. Removing..."))
     in_dtm <- terra::focal(in_dtm, 9, mean, na.policy = "only", na.rm = T)
     na_count <- terra::freq(in_dtm, value = NA, zones = sab)$count
   }
-  message(paste0("  dtm has no interior NA values"))
+  message(paste0(Sys.time(), "    dtm has no interior NA values"))
   if (dtm_fill_flag) in_dtm <- terra::crop(in_dtm, sab, mask = T)
   
   # fill nas -- dsm
   na_count <- terra::freq(in_dsm, value = NA, zones = sab)$count
   while(na_count != 0){
     dsm_fill_flag <- T
-    message(paste0("  dsm has ", na_count, " NAs. Removing..."))
+    message(paste0(Sys.time(), "    dsm has ", na_count, " NAs. Removing..."))
     in_dsm <- terra::focal(in_dsm, 9, mean, na.policy = "only", na.rm = T)
     na_count <- terra::freq(in_dsm, value = NA, zones = sab)$count
   }
-  message(paste0("  dtm has no interior NA values"))
+  message(paste0(Sys.time(), "    dsm has no interior NA values"))
   if (dsm_fill_flag) in_dsm <- terra::crop(in_dsm, sab, mask = T)
   
   # write to file
@@ -131,6 +131,7 @@ prep_dems <- function(in_dtm, in_dsm, out_dtm, out_dsm){
   # read back in and return as SpatRasters
   if (dtm_fill_flag) in_dtm <- terra::rast(out_dtm)
   if (dsm_fill_flag) in_dsm <- terra::rast(out_dsm)
+  message(paste0(Sys.time(), " prep_dems() is complete"))
   return(list(dtm = in_dtm, dsm = in_dsm))
   
 }

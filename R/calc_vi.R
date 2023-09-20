@@ -1,10 +1,10 @@
 #' Calculate visibility index at points
 #'
-#' The third suggested function in the VisiMod workflow, following (1) `prep_dems()` and (2) `gen_pts()`. Function that uses both a digital terrain model (DTM) and digital surface model (DSM) to calculate the visibility index (VI) from a series of point locations. VI represents the proportion of area visible from a given point relative to the total area within a viewing distance of interest, ranging from 0 (no visibility) to 1 (complete visibility). This function enables the calculation of omnidirectional VI (in 360 degrees surrounding each point) or directional VI (within a viewing "wedge" defined by an azimuth and angular field of view). Directional visibility can be calculated in two ways: (1) in a singular, specific viewing direction/azimuth; or (2) with each point having a randomly assigned viewing direction/azimuth. The former is more useful for building VI predictive models in a singular direction; the latter can be used to build directionally independent models that can be applied for the prediction of visibility in any direction. Irrespective of the VI type, users define one or more distances or viewing radii within which VI is calculated. VI values are appended to input points are intended for use as training and validation in the VisiMod visibility modeling workflow.
+#' The third suggested function in the VisiMod workflow, following (1) [VisiMod::prep_dems()] and (2) [VisiMod::gen_pts()]. Function that uses both a digital terrain model (DTM) and digital surface model (DSM) to calculate the visibility index (VI) from a series of point locations. VI represents the proportion of area visible from a given point relative to the total area within a viewing distance of interest, ranging from 0 (no visibility) to 1 (complete visibility). This function enables the calculation of omnidirectional VI (in 360 degrees surrounding each point) or directional VI (within a viewing "wedge" defined by an azimuth and angular field of view). Directional visibility can be calculated in two ways: (1) in a singular, specific viewing direction/azimuth; or (2) with each point having a randomly assigned viewing direction/azimuth. The former is more useful for building VI predictive models in a singular direction; the latter can be used to build directionally independent models that can be applied for the prediction of visibility in any direction. Irrespective of the VI type, users define one or more distances or viewing radii within which VI is calculated. VI values are appended to input points are intended for use as training and validation in the VisiMod visibility modeling workflow.
 #' @details
 #' * `dtm` and `dsm` SpatRasters can be defined using the terra library. They should have the same coordinate system, resolution, extent, and origin.
-#' * `pts` can be defined using the `gen_pts()` function within the VisiMod library. But, they can also be created through many other means. For example, one could derive a data.frame of x-y coordinate pairs from a SpatVector using `terra::crds()` or from an sf object using `sf::st_coordinates()`. However, using `gen_pts()` is advantageous, as it ensures that points are (1) in the same coordinate system as `dtm` and `dsm`; and (2) are at least `vi_rad` from the edge of the study area.
-#' * `vi_rad` should not exceed the `max_vis_dist` defined in the previous `gen_pts()` step in the VisiMod workflow. `vi_rad` will affect processing time quite dramatically. As distance increases, processing time will increase exponentially.
+#' * `pts` can be defined using the [VisiMod::gen_pts()] function within the VisiMod library. But, they can also be created through many other means. For example, one could derive a data.frame of x-y coordinate pairs from a SpatVector using `terra::crds()` or from an sf object using `sf::st_coordinates()`. However, using [VisiMod::gen_pts()] is advantageous, as it ensures that points are (1) in the same coordinate system as `dtm` and `dsm`; and (2) are at least `vi_rad` from the edge of the study area.
+#' * `vi_rad` should not exceed the `max_vi_rad` defined in the previous [VisiMod::gen_pts()] step in the VisiMod workflow. `vi_rad` will affect processing time quite dramatically. As distance increases, processing time will increase exponentially.
 #' * Note that this function is parallelized and can leverage as many cores as your computer has available to speed up processing. As with all parallel processing in R, however, there is an overhead cost associated with setting up parallel operations. So, for small numbers of input points (`pts`) and/or short viewing radii (`view_rad`), using many cores may not speed up your processing significantly.
 #' * Due to the parallel nature of this algorithm, there are rare situations in which errors occur in the calculation of VI from one (or more) of the input `pts`. We hypothesize that this may be the result of the same `dtm` and `dsm` being read into several cores at once, causing a conflict. In testing, we have found that by simply retrying a calculation one or more times, the errors can be resolved. The function argument `n_retry` enables the user to define how many times the calculation should be attempted on a point that returns an error before simply omitting it from further consideration. If the error persists, note that the number of inputs `pts` may not match the number of rows in the returned data.frame.
 #' @param dtm SpatRaster. Digital terrain model at finest resolution available.
@@ -16,7 +16,7 @@
 #' @param vi_azi Numeric. Defines the azimuth, or central viewing direction, in degrees, of the directional wedge used for VI calculation.  Only used if vi_type == "directional_single" | vi_type == "directional_random". Values must be 0-360.
 #' @param cores Numeric. Defines the number of cores you would like to use for parallel processing. Defaults to half of the cores on your machine.
 #' @param n_retry Numeric. Defines the number of times you would like to attempt to retry a VI calculation before omitting the point from further analysis. See Details.
-#' @return data.frame with columns 'x', 'y', 'vi_x' for x in vi_rad, and 'azimuth' if `vi_type` == 'directional_random'
+#' @return data.frame with columns 'x', 'y', 'vi_x' for x in vi_rad, and 'azimuth' if `vi_type == 'directional_random'`
 #'
 #' @export
 #' @examples
@@ -28,24 +28,27 @@
 #' pd <- prep_dems(dtm, dsm, "C:/temp/dtm_filled.tif", "C:/temp/dsm_filled.tif")
 #'
 #' # get your points
-#' my_points <- generate_pts(dtm, dsm, 100, 1000)
+#' my_points <- gen_pts(dtm, dsm, 100, 1000)
 #' 
 #' # calculate vi
-#' my_points <- calculate_vi(dtm, dsm, my_points, "directional_single", c(500, 1000), 90, 90, 4L, 5L)
+#' my_points <- calc_vi(dtm, dsm, my_points, "directional_single", c(500, 1000), 90, 90, 4L, 5L)
 
 
 calc_vi <- function(dtm, dsm, pts, vi_type, vi_rad, vi_fov=180, vi_azi = 0, 
-                         cores = floor(parallel::detectCores()/2), n_retry = 5L){
+                    cores = floor(parallel::detectCores()/2), n_retry = 5L){
+  
+  # print message
+  message(paste0(Sys.time(), " calc_vi() has begun"))
   
   # first compareGeom, it will return an error if the rasters do not match
   cg <- terra::compareGeom(dtm, dsm, crs=TRUE, ext=TRUE, rowcol=TRUE, res=TRUE)
   if(cg==FALSE){
-    stop("DTM and DSM geometry not comparable, check crs, extent, and resolution.")
+    stop("\nDTM and DSM geometry not comparable, check crs, extent, and resolution.\n")
   }
   
   # check that an x and y column exist
   if ("x" %in% colnames(pts) == FALSE | "y" %in% colnames(pts) == FALSE){
-    stop("Input data.frame must have an 'x' and 'y' column.")
+    stop("\nInput data.frame must have an 'x' and 'y' column.\n")
   }
   
   # get source locations of dsm and dtm files (needed for reading into each core)
@@ -343,10 +346,12 @@ calc_vi <- function(dtm, dsm, pts, vi_type, vi_rad, vi_fov=180, vi_azi = 0,
     
   } else {
     
-    stop("vi_type must be one of: 'omnidir', 'directional_single', or 'directional_random'.")
+    stop("\nvi_type must be one of: 'omnidir', 'directional_single', or 'directional_random'.\n")
     
   }
   
+  # return result
+  message(paste0(Sys.time(), " calc_vi() is complete"))
   return(result)
   
 }

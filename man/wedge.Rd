@@ -7,21 +7,21 @@
 wedge(x, y, rad, az, theta)
 }
 \arguments{
-\item{x}{the x coordinate of the wedge origin point}
+\item{x}{Numeric. The x coordinate of the wedge origin point.}
 
-\item{y}{the y coordinate of the wedge origin point}
+\item{y}{Numeric. The y coordinate of the wedge origin point.}
 
-\item{rad}{the radius of the wedge}
+\item{rad}{Numeric. The radius of the wedge.}
 
-\item{az}{the azimuth of the wedge (direction in which the wedge will be drawn) in degrees. Must be between 0 and 359.}
+\item{az}{Numeric. The azimuth of the wedge (direction in which the wedge will be drawn) in degrees. Must be between 0 and 359.}
 
-\item{theta}{the opening angle of the wedge in degrees, must be between 1 and 360}
+\item{theta}{Numeric. The angular field of view of the wedge in degrees, must be between 1 and 360.}
 }
 \value{
-SpatVector
+SpatVector representation of a wedge.
 }
 \description{
-Function that draws a wedge with user-defined radius, azimuth, and theta.
+Function that draws a wedge (angular slice of a circle from a central origin point) with user-defined radius, azimuth (central viewing direction), and theta (angular field of view). This is a utility function within the VisiMod library that is used in several functions to aid in directional visibility estimation.
 }
 \examples{
 # draw a east-facing wedge
