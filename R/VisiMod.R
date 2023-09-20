@@ -60,7 +60,7 @@ VisiMod <- function(dtm, dsm, num_pts, dist, vi_type, vi_fov, vi_azi, save_dir =
       df <- merge(gpd$pred_pts, cv_df_dist, by=c("x", "y"))
       mod <- mod_vi(df, d, cross_validate = FALSE, tune = F, cores)
       message(paste0(Sys.time(), ": Mapping..."))
-      vimap <- map_vi(mod, preds, cores, T, file.path(save_dir, "vi.tif"))
+      vimap <- map_vi(mod$ranger_mod, preds, cores, T, file.path(save_dir, "vi.tif"))
       names(vimap) <- paste0("vi_d", as.character(d), "_f", as.character(fov), "_a", as.character(az))
       rass <- c(rass, vimap)
     }
@@ -94,7 +94,7 @@ VisiMod <- function(dtm, dsm, num_pts, dist, vi_type, vi_fov, vi_azi, save_dir =
           df <- merge(gpd$pred_pts, cv_df_dist, by=c("x", "y"))
           mod <- mod_vi(df, d, cross_validate = FALSE, tune = F, cores)
           message(paste0(Sys.time(), ": Mapping..."))
-          vimap <- map_vi(mod, preds, cores, T, file.path(save_dir, "vi.tif"))
+          vimap <- map_vi(mod$ranger_mod, preds, cores, T, file.path(save_dir, "vi.tif"))
           names(vimap) <- paste0("vi_d", as.character(d), "_f", as.character(fov), "_a", as.character(az))
           rass <- c(rass, vimap)
         }
