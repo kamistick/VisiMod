@@ -1,10 +1,10 @@
 #' Check and prepare DEMs for use in VisiMod workflow
 #'
 #' @description
-#' This function performs three checks to determine if data are ready for the VisiMod workflow. 
-#'  (1) Are the two input SpatRasters are spatially aligned (same CRS, extent, resolution, origin, and number of rows/columns)? 
-#'  (2) Are the two input SpatRasters in appropriate projected coordinate systems, where linear units are measured in meters (e.g., UTM)? 
-#'  (3) Are there any NA cells within the interior of either SpatRaster?
+#' This function performs three checks to determine if data are ready for the VisiMod workflow: 
+#'  * (1) Are the two input SpatRasters are spatially aligned (same CRS, extent, resolution, origin, and number of rows/columns)? 
+#'  * (2) Are the two input SpatRasters in appropriate projected coordinate systems, where linear units are measured in meters (e.g., UTM)? 
+#'  * (3) Are there any NA cells within the interior of either SpatRaster?
 #'  
 #'  Interior NA values (i.e., within a polygon representing the outer dimensions of the data), will be problematic for VisiMod. If present, the function will fill these NA values using focal means from surrounding, non-NA pixels and output new DEMs. 
 #' 
@@ -19,7 +19,7 @@
 #' @param in_dsm SpatRaster. Digital surface model at finest resolution available.
 #' @param out_dtm Character. File name for saving your output DTM. Only used if NAs are found and filled.
 #' @param out_dsm Character. File name for saving your output DSM. Only used if NAs are found and filled.
-#' @return If `dtm` and `dsm` are spatially aligned, a list with two SpatRasters: `dtm` and `dsm`. If interior NAs were found, the returned SpatRasters will be filled. If not, the original SpatRasters will be returned.
+#' @return If the `dtm` and `dsm` are spatially aligned, it returns a list with two SpatRasters: `dtm` and `dsm`. If interior NAs were found, the returned SpatRasters will be filled. If not, the original SpatRasters will be returned.
 #'
 #' @export
 #' @examples

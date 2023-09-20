@@ -16,13 +16,15 @@ prep_dems(in_dtm, in_dsm, out_dtm, out_dsm)
 \item{out_dsm}{Character. File name for saving your output DSM. Only used if NAs are found and filled.}
 }
 \value{
-If \code{dtm} and \code{dsm} are spatially aligned, a list with two SpatRasters: \code{dtm} and \code{dsm}. If interior NAs were found, the returned SpatRasters will be filled. If not, the original SpatRasters will be returned.
+If the \code{dtm} and \code{dsm} are spatially aligned, it returns a list with two SpatRasters: \code{dtm} and \code{dsm}. If interior NAs were found, the returned SpatRasters will be filled. If not, the original SpatRasters will be returned.
 }
 \description{
-This function performs three checks to determine if data are ready for the VisiMod workflow.
-(1) Are the two input SpatRasters are spatially aligned (same CRS, extent, resolution, origin, and number of rows/columns)?
-(2) Are the two input SpatRasters in appropriate projected coordinate systems, where linear units are measured in meters (e.g., UTM)?
-(3) Are there any NA cells within the interior of either SpatRaster?
+This function performs three checks to determine if data are ready for the VisiMod workflow:
+\itemize{
+\item (1) Are the two input SpatRasters are spatially aligned (same CRS, extent, resolution, origin, and number of rows/columns)?
+\item (2) Are the two input SpatRasters in appropriate projected coordinate systems, where linear units are measured in meters (e.g., UTM)?
+\item (3) Are there any NA cells within the interior of either SpatRaster?
+}
 
 Interior NA values (i.e., within a polygon representing the outer dimensions of the data), will be problematic for VisiMod. If present, the function will fill these NA values using focal means from surrounding, non-NA pixels and output new DEMs.
 }
