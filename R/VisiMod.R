@@ -1,6 +1,15 @@
-#' Model and Map VI
+#' Model and Map VI 
 #'
-#' Full workflow for mapping VI using random forest modeling.  
+#' This function takes a digital terrain model (DTM) and a digital surface model (DSM) and builds a predictive model to map modeled visibility index (VI) across the study area. This function sequentially combines the full suite of VisiMod functions ((1) [VisiMod::prep_dems()] (2) [VisiMod::gen_pts()], (3) [VisiMod::calc_vi()], (4) [VisiMod::gen_preds()], (5) [VisiMod::mod_vi()], and [VisiMod::map_vi()]) to return a wall-to-wall SpatRaster of VI values.       
+#' 
+#' @details
+#' * This function assumes default parameters for many of the internal functions. If users desire more control over these parameters they should execute the workflow in the order laid out in this function's description. 
+#' * `dtm` and `dsm` SpatRasters can be defined using the terra library. They should have the same coordinate system, resolution, extent, and origin.
+#' * The more points (`num_pts`) generated, the more robust the modeling procedure will be; however, more points will also increase processing time for subsequent functions in the workflow. The default is set to 200, which should balance model performance and processing time. We do not recommend generating more than 1000 points.
+#' * Processing time will increase exponentially with increasing distances (`dist`). However, this also depends on the spatial resolution of the input `dtm`/`dsm`. For example, looking at 200m with a 1m resolution is functionally the same as a 400m distance with a 2m resolution, in terms of processing time. We do not recommend attempting this workflow at distances beyond 2000x the input resolution.
+#' * Note that this function is parallelized and can leverage as many cores as your computer has available to speed up processing. As with all parallel processing in R, however, there is an overhead cost associated with setting up parallel operations. So, for small numbers of input points (`num_pts`) and/or short viewing distance (`dist`), using many cores may not speed up your processing significantly.
+#' 
+#' 
 #' @param dtm SpatRaster. A digital terrain model at finest resolution available
 #' @param dsm SpatRaster. A digital surface model at finest resolution available
 #' @param num_pts Numeric. Number of points used to train the model 
@@ -9,6 +18,7 @@
 #' @param vi_fov Numeric. Defines the angular field of view, in degrees, of the directional wedge used for the VI calculation. Only used if vi_type == "directional_single". Values must be > 0 and < 360
 #' @param vi_azi Numeric. Defines the azimuth, or central viewing direction, in degrees, of the directional wedge used for VI calculation.  Only used if vi_type == "directional_single". Values must be >= 0 and < 360.
 #' @param save_dir Character. The directory where intermediary files will be saved.
+#' @param cores Numeric. The number of cores used for parallel processing of VI calculation, modeling, and mapping. The default number of cores is half of the cores on your machine.
 #' @return A SpatRaster, or list of SpatRasters, of mapped VI with a potential range of 0-1.
 #' 
 #' @export
