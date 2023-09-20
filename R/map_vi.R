@@ -1,7 +1,11 @@
 #' Map VI across a landscape
 #' 
-#' The sixth and final suggested function in the VisiMod workflow, following (1) [VisiMod::prep_dems()] (2) [VisiMod::gen_pts()], (3) [VisiMod::calc_vi()], (4) [VisiMod::gen_preds()], and (5) [VisiMod::mod_vi()]. This function takes a random forest model (generated using [VisiMod::mod_vi()]), representing the predictive relationship between visibility index (VI) (calculated at a series of point locations using [VisiMod::calc_vi()]), and a suite of visibility predictor layers representing terrain and vegetation structure (derived using [VisiMod::gen_preds()]), and applies this model to the prediction of VI across an entire study area of interest. Successful execution of this function will result in a spatially exhaustive ("wall-to-wall") map, where each pixel represents an estimate of VI based on a spatial scope of interest (viewing distance, and direction and field of view, if mapping directional VI).
+#' This function takes a random forest model (generated using [VisiMod::mod_vi()]), representing the predictive relationship between visibility index (VI) (calculated at a series of point locations using [VisiMod::calc_vi()]), and a suite of visibility predictor layers representing terrain and vegetation structure (derived using [VisiMod::gen_preds()]), and applies this model to the prediction of VI across an entire study area of interest. 
+#' 
+#' Successful execution of this function will result in a spatially exhaustive ("wall-to-wall") map, where each pixel represents an estimate of VI based on a spatial scope of interest (viewing distance, and direction and field of view, if mapping directional VI).
+#' 
 #' @details
+#' * This is the sixth and final suggested function in the VisiMod workflow, following (1) [VisiMod::prep_dems()] (2) [VisiMod::gen_pts()], (3) [VisiMod::calc_vi()], (4) [VisiMod::gen_preds()], and (5) [VisiMod::mod_vi()].
 #' * The spatial resolution, coordinate system, origin, and extent of the resulting map will be based entirely on those of your multiband predictors raster.
 #' * It is recommended to be somewhat conservative with your definition of `cores`. Using a large proportion of your computer's cores can cause a memory overload, as a large amount of information has to be stored in memory for each core.
 #' * Note that, by default, if `save == TRUE` and you supply an existing filename to `out_file`, it will be overwritten.
