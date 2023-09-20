@@ -31,7 +31,7 @@ gen_pts <- function(dtm, dsm, num_pts = 200, max_vi_rad = terra::res(dtm)[1] * 5
   }
   
   # second make sure that max_vi_rad is small enough to leave sample area
-  e <- ext(dtm)
+  e <- terra::ext(dtm)
   wid <- abs(e[2] - e[1])
   hgt <- abs(e[4] - e[3])
   min.dim <- min(c(wid, hgt))
