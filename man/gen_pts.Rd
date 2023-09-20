@@ -4,7 +4,7 @@
 \alias{gen_pts}
 \title{Create random points for VI modeling}
 \usage{
-gen_pts(dtm, dsm, num_pts = 200, max_vis_dist)
+gen_pts(dtm, dsm, num_pts = 200, max_vi_rad = terra::res(dtm)[1] * 500)
 }
 \arguments{
 \item{dtm}{SpatRaster. Digital terrain model at finest resolution available}
@@ -13,19 +13,19 @@ gen_pts(dtm, dsm, num_pts = 200, max_vis_dist)
 
 \item{num_pts}{Numeric. The number of points generated}
 
-\item{max_vis_dist}{Numeric. The maximum distance (in meters) to which VI will be calculated, to account for study area boundary}
+\item{max_vi_rad}{Numeric. The maximum radius (in meters) to which VI will be calculated. Defaults to 500x the resolution of the input \code{dtm}.}
 }
 \value{
 data.frame with columns 'x' and 'y'
 }
 \description{
-The second suggested function in the VisiMod workflow, following \code{prep_dems()}. Function that generates a user-defined number of randomly distributed points within a study area at an appropriate distance from the study area boundary. Study area extent defined by input digital terrain model (DTM) and digital surface model (DSM). These points are intended for use as training and validation points in the VisiMod visibility modeling workflow.
+The second suggested function in the VisiMod workflow, following \code{\link[=prep_dems]{prep_dems()}}. Function that generates a user-defined number of randomly distributed points within a study area at an appropriate distance from the study area boundary. Study area extent defined by input digital terrain model (DTM) and digital surface model (DSM). These points are intended for use as training and validation points in the VisiMod visibility modeling workflow.
 }
 \details{
 \itemize{
 \item \code{dtm} and \code{dsm} SpatRasters can be defined using the terra library. They should have the same coordinate system, resolution, extent, and origin.
 \item The more points generated, the more robust the modeling procedure will be; however, more points will also increase total processing time for subsequent functions in the workflow. The default is set to 200, which should achieve a nice balance between model performance and processing time. We do not recommend generating more than 1000 points.
-\item The maximum VI distance will also affect processing time quite dramatically. As distance increases, processing time will increase exponentially. We do not recommend attempting this workflow at distances beyond 3000 m.
+\item The maximum VI radius (\code{max_vi_rad}) will also affect processing time quite dramatically. As distance increases, processing time will increase exponentially. However, this also depends on the spatial resolution of the input \code{dtm}/\code{dsm}. For example, a 200m distance with a 1m resolution is functionally the same as a 400m distance with a 2m resolution, in terms of processing time. We do not recommend attempting this workflow at distances beyond 2000x the input resolution.
 }
 }
 \examples{
@@ -34,5 +34,5 @@ dtm <- rast("dtm.tif")
 dsm <- rast("dsm.tif")
 
 # generate 1,000 points with a buffer of 1,000 meters
-generate_pts(dtm, dsm, 1000, 1000)
+gen_pts(dtm, dsm, 1000, 1000)
 }

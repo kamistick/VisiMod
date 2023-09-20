@@ -23,16 +23,16 @@
 #' pd <- prep_dems(dtm, dsm, "C:/temp/dtm_filled.tif", "C:/temp/dsm_filled.tif")
 #' 
 #' # get your points
-#' my_points <- generate_pts(dtm, dsm, 100, 1000)
+#' my_points <- gen_pts(dtm, dsm, 100, 1000)
 #' 
 #' # calculate vi
-#' my_points <- calculate_vi(dtm, dsm, my_points, "directional_single", c(500, 1000), 90, 90, 4L, 5L)
+#' my_points <- calc_vi(dtm, dsm, my_points, "directional_single", c(500, 1000), 90, 90, 4L, 5L)
 #' 
 #' # generate predictors
 #' preds <- gen_preds(dtm, dsm, my_points, "directional_single", 90, 90, T, "C:/temp")
 #' 
 #' # model vi
-#' mod <- model_vi(preds, 500, T, T, 5L)
+#' mod <- mod_vi(preds, 500, T, T, 5L)
 #' 
 #' # map vi
 #' rf <- mod$ranger_mod
@@ -50,7 +50,7 @@ map_vi <- function(mod, predictors, cores = floor(parallel::detectCores()/2),
   mod_names <- mod$forest$independent.variable.names
   pred_names <- names(predictors)
   if(all(pred_names %in% mod_names)==FALSE){
-    stop("Independent variable names from model do not match predictor raster names. The names in the SpatRaster object should exactly match those expected by the model.")
+    stop("\nIndependent variable names from model do not match predictor raster names. The names in the SpatRaster object should exactly match those expected by the model.\n")
   }
   
   # define prediction function

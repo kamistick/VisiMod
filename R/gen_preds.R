@@ -1,17 +1,17 @@
 #' Generate predictors for modeling visibility index
 #'
-#' The fourth suggested function in the VisiMod workflow, following (1) `prep_dems()`, (2) `gen_pts()`, and (3) `calculate_vi()`. This function generates and extracts a suite of visibility predictor pixel values at each input point location. The predictor variables were designed to capture the dominant landscape controls of visibility in a wildland (undeveloped) environment that can be readily quantified using a combination of a DTM and DSM. They include canopy cover, canopy height, elevation, slope, derivative of slope, terrain curvature (plan and profile), cosine and sine of aspect, and slope x cosine and sine of aspect. Predictor values are extracted both locally (i.e., representing the terrain/vegetation characteristic of the pixel within which each point lies) and focally (i.e., within a focal neighborhood of pixels surrounding the point). In the case of focally derived predictors, the focal mean and standard deviation are calculated for each landscape variable within a neighborhood with radius `x` pixels for `x %in% c(2, 4, 6, 8, 16, 32)`. If the `vi_type == 'omnidir'`, the focal neighborhood will be a circle surrounding each point. If the `vi_type == 'directional_single' | vi_type == 'directional_random'`, the focal neighborhood will be a 'wedge' defined by the central viewing azimuth (`vi_azi`) and the angular field of view (`vi_fov`).
+#' The fourth suggested function in the VisiMod workflow, following (1) [VisiMod::prep_dems()], (2) [VisiMod::gen_pts()], and (3) [VisiMod::calc_vi()]. This function generates and extracts a suite of visibility predictor pixel values at each input point location. The predictor variables were designed to capture the dominant landscape controls of visibility in a wildland (undeveloped) environment that can be readily quantified using a combination of a DTM and DSM. They include canopy cover, canopy height, elevation, slope, derivative of slope, terrain curvature (plan and profile), cosine and sine of aspect, and slope x cosine and sine of aspect. Predictor values are extracted both locally (i.e., representing the terrain/vegetation characteristic of the pixel within which each point lies) and focally (i.e., within a focal neighborhood of pixels surrounding the point). In the case of focally derived predictors, the focal mean and standard deviation are calculated for each landscape variable within a neighborhood with radius `x` pixels for `x %in% c(2, 4, 6, 8, 16, 32)`. If the `vi_type == 'omnidir'`, the focal neighborhood will be a circle surrounding each point. If the `vi_type == 'directional_single' | vi_type == 'directional_random'`, the focal neighborhood will be a 'wedge' defined by the central viewing azimuth (`vi_azi`) and the angular field of view (`vi_fov`).
 #' @details
 #' * `dtm` and `dsm` SpatRasters can be defined using the terra library. They should have the same coordinate system, resolution, extent, and origin.
-#' * `pts` should come from the successful execution of the previous function in the VisiMod workflow: `calculate_vi()`
-#' * `vi_type`, `vi_fov`, and `vi_azi` should match those used in your previous call to the `calculate_vi()` function. In the VisiMod workflow, this will ensure that your visibility modeling response variable(s) (VI within a spatial scope of interest) will correspond with the spatial scope of your predictor variables.
+#' * `pts` should come from the successful execution of the previous function in the VisiMod workflow: [VisiMod::calc_vi()].
+#' * `vi_type`, `vi_fov`, and `vi_azi` should match those used in your previous call to the [VisiMod::calc_vi()] function. In the VisiMod workflow, this will ensure that your visibility modeling response variable(s) (VI within a spatial scope of interest) will correspond with the spatial scope of your predictor variables.
 #' * Note that if `vi_type == 'directional_random'`, this function will not be able to save a multiband raster with spatially-exhaustive ('wall-to-wall') representations of the predictor variables, as the directional predictor values are calculated according to the randomly-assigned azimuths of each input point. This is useful for building a robust, directionally-independent model that can generate directional VI predictions, but to apply that model to generate a VI map in a specific direction will require rerunning this function with `vi_type == 'directional_single'`. For most applications, it will be more useful and efficient to set `vi_type` to `'directional_single'`.
 #' * Predictors are generated at a user-defined coarser resolution than the input DTM/DSM resolution to facilitate broad scale, efficient VI modeling and mapping. Defining the aggregation factor (`agg_fact`) to be too low will result in very large predictor files, consume larger proportions of RAM, and slow down the VisiMod workflow. Conversely, setting `agg_fact` too high, although computationally more efficient, may result in predictors that are too spatially coarse to capture sufficient landscape structural detail capable of predicting visibility. In testing, we have found predictors with spatial resolutions of approximately 10m to produce a desirable balance between these extremes.
-#' * For the focal predictors, by default, the following pixel radii are used to define your focal anlaysis neighborhood: 2, 4, 6, 8, 16, and 32 pixels. It is possible that a circular or wedge neighborhood around a given point may extend beyond the bounds of your input DTM/DSM, particularly at the larger radii (i.e., 16- or 32-pixels). Whether this happens or not will be dependent upon two factors: (1) the `max_vis_dist` supplied to the function gen_pts(); and (2) the `agg_fact` specified in this function. For example, if you defined your `max_vis_dist` to be 200m, that means some of your sample points may be 200m from the edge of your DTM/DSM. If your DTM/DSM were 1m resolution, and you specified an `agg_fact` of 10, your predictor layers would have a 10m resolution. A 32-pixel radius circle or wedge would have a radius of 320m, meaning the neighborhood would reach beyond the extent of your study area. In situations like this, the focal predictors would all return NAs to ensure that incomplete neighborhoods aren't affecting the quality of the predictor data extracted at each point. So, you must think ahead about the spatial relationships between study area size, `max_vis_dist`, input and output resolutions to ensure that your data are complete.
+#' * For the focal predictors, by default, the following pixel radii are used to define your focal anlaysis neighborhood: 2, 4, 6, 8, 16, and 32 pixels. It is possible that a circular or wedge neighborhood around a given point may extend beyond the bounds of your input DTM/DSM, particularly at the larger radii (i.e., 16- or 32-pixels). Whether this happens or not will be dependent upon two factors: (1) the `max_vi_rad` supplied to the function [VisiMod::gen_pts()]; and (2) the `agg_fact` specified in this function. For example, if you defined your `max_vi_rad` to be 200m, that means some of your sample points may be 200m from the edge of your DTM/DSM. If your DTM/DSM were 1m resolution, and you specified an `agg_fact` of 10, your predictor layers would have a 10m resolution. A 32-pixel radius circle or wedge would have a radius of 320m, meaning the neighborhood would reach beyond the extent of your study area. In situations like this, the focal predictors would all return NAs to ensure that incomplete neighborhoods aren't affecting the quality of the predictor data extracted at each point. So, you must think ahead about the spatial relationships between study area size, `max_vi_rad`, input and output resolutions to ensure that your data are complete.
 #' 
 #' @param dtm SpatRaster. Digital terrain model at finest resolution available.
 #' @param dsm SpatRaster. Digital surface model at finest resolution available.
-#' @param pts data.frame. The point locations for which vi will be calculated. At a minimum, 'x' and 'y' columns are required. An 'azimuth' column is required if `vi_type == 'directional_random'`. One or more 'vi' columns should also be present if this is run after `calculate_vi()`.
+#' @param pts data.frame. The point locations for which vi will be calculated. At a minimum, 'x' and 'y' columns are required. An 'azimuth' column is required if `vi_type == 'directional_random'`. One or more 'vi' columns should also be present if this is run after [VisiMod::calc_vi()].
 #' @param vi_type Character. Defines which type of VI calculation you would like to conduct. One of: 'omnidir' (omnidirectional, 360 degree), 'directional_single' (a single specified view direction for each point), 'directional_random' (viewing directions will be randomly assigned to each point).
 #' @param vi_fov Numeric. Defines the angular field of view, in degrees, of the directional wedge used for the VI calculation. Only used if `vi_type == 'directional_single' | vi_type == 'directional_random'`. Values must be > 0 and < 360.
 #' @param vi_azi Numeric. Defines the azimuth, or central viewing direction, in degrees, of the directional wedge used for VI calculation. Only used if `vi_type == 'directional_single'`. Values must be 0-360.
@@ -30,16 +30,19 @@
 #' pd <- prep_dems(dtm, dsm, "C:/temp/dtm_filled.tif", "C:/temp/dsm_filled.tif")
 #'
 #' # get your points
-#' my_points <- generate_pts(dtm, dsm, 100, 1000)
+#' my_points <- gen_pts(dtm, dsm, 100, 1000)
 #' 
 #' # calculate vi
-#' my_points <- calculate_vi(dtm, dsm, my_points, "directional_single", c(500, 1000), 90, 90, 4L, 5L)
+#' my_points <- calc_vi(dtm, dsm, my_points, "directional_single", c(500, 1000), 90, 90, 4L, 5L)
 #'
 #' # generate predictors
 #' preds <- gen_preds(dtm, dsm, my_points, "directional_single", 90, 90, T, "C:/temp")
 
 gen_preds <- function(dtm, dsm, pts, vi_type, vi_fov=180, vi_azi=0, agg_fact = 10L,
-                        save = TRUE, save_dir = getwd()){
+                      save = TRUE, save_dir = getwd()){
+  
+  # print message
+  message(paste0(Sys.time(), " gen_preds() has begun"))
   
   # suppress progress bars
   terra::terraOptions(progress=0)
@@ -47,17 +50,17 @@ gen_preds <- function(dtm, dsm, pts, vi_type, vi_fov=180, vi_azi=0, agg_fact = 1
   # first compareGeom, it will return an error if the rasters do not match
   cg <- terra::compareGeom(dtm, dsm, crs=TRUE, ext=TRUE, rowcol=TRUE, res=TRUE)
   if(cg==FALSE){
-    stop("DTM and DSM geometry not comparable, check crs, extent, and resolution.")
+    stop("\nDTM and DSM geometry not comparable, check crs, extent, and resolution.\n")
   }
   
   # make sure vi_type is one of the three options
   if (!vi_type %in% c("omnidir", "directional_single", "directional_random")){
-    stop("vi_type must be one of: 'omnidir', 'directional_single', or 'directional_random'.")
+    stop("\nvi_type must be one of: 'omnidir', 'directional_single', or 'directional_random'.\n")
   }
   
   # print message
-  message(paste0(Sys.time(), " Starting predictor generation"))
-  message(paste0(Sys.time(), " Running local predictors..."))
+  message(paste0(Sys.time(), "   Starting predictor generation..."))
+  message(paste0(Sys.time(), "   Running local predictors..."))
   
   # generate canopy height model, fill negatives with zeros
   chm <- dsm-dtm
@@ -169,8 +172,7 @@ gen_preds <- function(dtm, dsm, pts, vi_type, vi_fov=180, vi_azi=0, agg_fact = 1
     for (pred_rad in c(2,4,6,8,16,32)) {
       
       # print message
-      message(paste0(Sys.time(), " Running focal predictors at ", 
-                     pred_rad,  "px radius... "))
+      message(paste0(Sys.time(), "   Running focal predictors at ",  pred_rad,  "px radius..."))
       
       # generate focal neighborhoods (matrices) for omnidir
       if (vi_type == "omnidir") {
@@ -377,6 +379,7 @@ gen_preds <- function(dtm, dsm, pts, vi_type, vi_fov=180, vi_azi=0, agg_fact = 1
     final_df <- merge(df, pts)
     
     # return stack and df
+    message(paste0(Sys.time(), " gen_preds() is complete"))
     return(list(pred_pts = final_df, pred_rast = stack))
     
     ##############################################################################
@@ -394,7 +397,7 @@ gen_preds <- function(dtm, dsm, pts, vi_type, vi_fov=180, vi_azi=0, agg_fact = 1
     
     # next make sure you have an azimuth column before jumping into the loop
     if ("azimuth" %in% colnames(pts) == FALSE){
-      stop("Input data.frame must have an 'azimuth' column when using vi_type 'directional_random'.")
+      stop("\nInput data.frame must have an 'azimuth' column when using vi_type 'directional_random'.\n")
     }
     
     # for this one you have to do pt by pt for focal
@@ -402,7 +405,7 @@ gen_preds <- function(dtm, dsm, pts, vi_type, vi_fov=180, vi_azi=0, agg_fact = 1
       
       # print an update every 25 points
       if(i %% 25 == 0 | i == 1){
-        message(paste0(Sys.time(), " Starting point ", i, "..."))
+        message(paste0(Sys.time(), "   Starting point ", i, "..."))
       }
       
       # isolate point and azimuth
@@ -461,7 +464,7 @@ gen_preds <- function(dtm, dsm, pts, vi_type, vi_fov=180, vi_azi=0, agg_fact = 1
         
         # convert pred_rad to meters using resolution and agg_fact
         conv <- terra::res(dtm)[1] * agg_fact
-
+        
         # add small amount to radius
         buff_dist <- pred_rad * conv + 0.5 * conv
         
@@ -469,7 +472,7 @@ gen_preds <- function(dtm, dsm, pts, vi_type, vi_fov=180, vi_azi=0, agg_fact = 1
         outer_wdg <- VisiMod::wedge(x, y, buff_dist, az, vi_fov)
         terra::crs(outer_wdg) <- terra::crs(dtm)
         inner_buf <- terra::buffer(pt_sv, buff_dist/2)
-
+        
         # create annulus wedge (donut difference between outer and inner wedges)
         annulus <- terra::erase(outer_wdg, inner_buf)
         
@@ -510,11 +513,9 @@ gen_preds <- function(dtm, dsm, pts, vi_type, vi_fov=180, vi_azi=0, agg_fact = 1
     
     # rename your df and return it
     final_df <- pts
+    message(paste0(Sys.time(), " gen_preds() is complete"))
     return(final_df)
     
   } 
   
-  # print message
-  message(paste0(Sys.time(), " Process completed"))
-
 }
