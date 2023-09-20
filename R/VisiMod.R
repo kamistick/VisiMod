@@ -49,6 +49,7 @@ VisiMod <- function(dtm, dsm, num_pts, dist, vi_type, vi_fov, vi_azi, save_dir =
     
     message(paste0(Sys.time(), ": Generating predictors..."))
     gpd <- gen_preds(dtm, dsm, gpt, vi_type, vi_fov, vi_azi, 10L, save=TRUE, save_dir)
+    preds <- rast(paste0(save_dir, "\\predictor_raster_stack_f360.tif"))
     
     rass <- c()
     for (d in dist){
