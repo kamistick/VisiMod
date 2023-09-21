@@ -1,15 +1,18 @@
 Package: VisiMod
-Title: Model And Map Visibility Index Across Landscapes
+Title: Map Modeled Visibility Index Across Wildland Landscapes
 Version: 2.0
-Authors@R: 
+Authors@R: c(
     person("Katherine", "Mistick", , "katherinemistick@gmail.com", role = c("aut", "cre"),
-           comment = c(ORCID = "YOUR-ORCID-ID"))
+           comment = c(ORCID = "0000-0003-2116-1594")),
+    person("Mickey", "Campbell", , "mickey.campbell57@gmail.com", role = c("aut"),
+           comment = c(ORCID = "0000-0002-4449-9275")))
 Description: A suite of tools for modeling visibility index using random
     forests.  Users provide a digital terrain (dtm) and digital surface
     (dsm) model and can generate models for omnidirectional (360º) or
     user-defined directional visibility indexes.
-License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
-    license
+URL: https://github.com/kamistick/VisiMod 
+BugReports: https://github.com/kamistick/VisiMod/issues
+License: use_mit_license()
 Imports:
     dplyr,
     ggplot2,
@@ -28,4 +31,4 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.3
 Depends: 
     R (>= 2.10)
-LazyData: true
+
