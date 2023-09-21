@@ -27,10 +27,12 @@ map_vi(
 A SpatRaster containing pixel-level VI predictions.
 }
 \description{
-The sixth and final suggested function in the VisiMod workflow, following (1) \code{\link[=prep_dems]{prep_dems()}} (2) \code{\link[=gen_pts]{gen_pts()}}, (3) \code{\link[=calc_vi]{calc_vi()}}, (4) \code{\link[=gen_preds]{gen_preds()}}, and (5) \code{\link[=mod_vi]{mod_vi()}}. This function takes a random forest model (generated using \code{\link[=mod_vi]{mod_vi()}}), representing the predictive relationship between visibility index (VI) (calculated at a series of point locations using \code{\link[=calc_vi]{calc_vi()}}), and a suite of visibility predictor layers representing terrain and vegetation structure (derived using \code{\link[=gen_preds]{gen_preds()}}), and applies this model to the prediction of VI across an entire study area of interest. Successful execution of this function will result in a spatially exhaustive ("wall-to-wall") map, where each pixel represents an estimate of VI based on a spatial scope of interest (viewing distance, and direction and field of view, if mapping directional VI).
+This function takes a random forest model (generated using \code{\link[=mod_vi]{mod_vi()}}), representing the predictive relationship between visibility index (VI) (calculated at a series of point locations using \code{\link[=calc_vi]{calc_vi()}}), and a suite of visibility predictor layers representing terrain and vegetation structure (derived using \code{\link[=gen_preds]{gen_preds()}}), and applies this model to the prediction of VI across an entire study area of interest.
 }
 \details{
+Successful execution of this function will result in a spatially exhaustive ("wall-to-wall") map, where each pixel represents an estimate of VI based on a spatial scope of interest (viewing distance, and direction and field of view, if mapping directional VI).
 \itemize{
+\item This is the sixth and final suggested function in the VisiMod workflow, following (1) \code{\link[=prep_dems]{prep_dems()}} (2) \code{\link[=gen_pts]{gen_pts()}}, (3) \code{\link[=calc_vi]{calc_vi()}}, (4) \code{\link[=gen_preds]{gen_preds()}}, and (5) \code{\link[=mod_vi]{mod_vi()}}.
 \item The spatial resolution, coordinate system, origin, and extent of the resulting map will be based entirely on those of your multiband predictors raster.
 \item It is recommended to be somewhat conservative with your definition of \code{cores}. Using a large proportion of your computer's cores can cause a memory overload, as a large amount of information has to be stored in memory for each core.
 \item Note that, by default, if \code{save == TRUE} and you supply an existing filename to \code{out_file}, it will be overwritten.

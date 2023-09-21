@@ -21,7 +21,7 @@ calc_vi(
 
 \item{dsm}{SpatRaster. Digital surface model at finest resolution available.}
 
-\item{pts}{data.frame.  The point locations for which vi will be calculated. At a minimum, 'x' and 'y' columns are required. An 'azimuth' column is required if vi_type == 'directional_random'.}
+\item{pts}{data.frame. The point locations for which vi will be calculated. At a minimum, 'x' and 'y' columns are required. An 'azimuth' column is required if vi_type == 'directional_random'.}
 
 \item{vi_type}{Character. Defines which type of VI calculation you would like to conduct. One of: "omnidir" (omnidirectional, 360 degree), "directional_single" (a single specified view direction for each point), "directional_random" (viewing directions will be randomly assigned to each point).}
 
@@ -39,10 +39,14 @@ calc_vi(
 data.frame with columns 'x', 'y', 'vi_x' for x in vi_rad, and 'azimuth' if \code{vi_type == 'directional_random'}
 }
 \description{
-The third suggested function in the VisiMod workflow, following (1) \code{\link[=prep_dems]{prep_dems()}} and (2) \code{\link[=gen_pts]{gen_pts()}}. Function that uses both a digital terrain model (DTM) and digital surface model (DSM) to calculate the visibility index (VI) from a series of point locations. VI represents the proportion of area visible from a given point relative to the total area within a viewing distance of interest, ranging from 0 (no visibility) to 1 (complete visibility). This function enables the calculation of omnidirectional VI (in 360 degrees surrounding each point) or directional VI (within a viewing "wedge" defined by an azimuth and angular field of view). Directional visibility can be calculated in two ways: (1) in a singular, specific viewing direction/azimuth; or (2) with each point having a randomly assigned viewing direction/azimuth. The former is more useful for building VI predictive models in a singular direction; the latter can be used to build directionally independent models that can be applied for the prediction of visibility in any direction. Irrespective of the VI type, users define one or more distances or viewing radii within which VI is calculated. VI values are appended to input points are intended for use as training and validation in the VisiMod visibility modeling workflow.
+This Function uses both a digital terrain model (DTM) and digital surface model (DSM) to calculate the visibility index (VI) from a series of point locations. VI represents the proportion of area visible from a given point relative to the total area within a viewing distance of interest, ranging from 0 (no visibility) to 1 (complete visibility).
 }
 \details{
+This function enables the calculation of omnidirectional VI (in 360 degrees surrounding each point) or directional VI (within a viewing "wedge" defined by an azimuth and angular field of view).
+
+Directional visibility can be calculated in two ways: (1) in a singular, specific viewing direction/azimuth; or (2) with each point having a randomly assigned viewing direction/azimuth. The former is more useful for building VI predictive models in a singular direction; the latter can be used to build directionally independent models that can be applied for the prediction of visibility in any direction. Irrespective of the VI type, users define one or more distances or viewing radii within which VI is calculated. VI values are appended to input points are intended for use as training and validation in the VisiMod visibility modeling workflow.
 \itemize{
+\item This is the third suggested function in the VisiMod workflow, following (1) \code{\link[=prep_dems]{prep_dems()}} and (2) \code{\link[=gen_pts]{gen_pts()}}.
 \item \code{dtm} and \code{dsm} SpatRasters can be defined using the terra library. They should have the same coordinate system, resolution, extent, and origin.
 \item \code{pts} can be defined using the \code{\link[=gen_pts]{gen_pts()}} function within the VisiMod library. But, they can also be created through many other means. For example, one could derive a data.frame of x-y coordinate pairs from a SpatVector using \code{terra::crds()} or from an sf object using \code{sf::st_coordinates()}. However, using \code{\link[=gen_pts]{gen_pts()}} is advantageous, as it ensures that points are (1) in the same coordinate system as \code{dtm} and \code{dsm}; and (2) are at least \code{vi_rad} from the edge of the study area.
 \item \code{vi_rad} should not exceed the \code{max_vi_rad} defined in the previous \code{\link[=gen_pts]{gen_pts()}} step in the VisiMod workflow. \code{vi_rad} will affect processing time quite dramatically. As distance increases, processing time will increase exponentially.

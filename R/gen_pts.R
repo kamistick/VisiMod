@@ -1,10 +1,12 @@
 #' Create random points for VI modeling
 #'
-#' The second suggested function in the VisiMod workflow, following [VisiMod::prep_dems()]. Function that generates a user-defined number of randomly distributed points within a study area at an appropriate distance from the study area boundary. Study area extent defined by input digital terrain model (DTM) and digital surface model (DSM). These points are intended for use as training and validation points in the VisiMod visibility modeling workflow.
+#' This function generates a user-defined number of randomly distributed points within a study area at an appropriate distance from the study area boundary. The study area extent is defined by the input digital terrain model (DTM) and digital surface model (DSM). These points are intended for use as training and validation points in the VisiMod visibility modeling workflow.
+#' 
 #' @details
+#' * This is the second suggested function in the VisiMod workflow, following [VisiMod::prep_dems()]. 
 #' * `dtm` and `dsm` SpatRasters can be defined using the terra library. They should have the same coordinate system, resolution, extent, and origin.
-#' * The more points generated, the more robust the modeling procedure will be; however, more points will also increase total processing time for subsequent functions in the workflow. The default is set to 200, which should achieve a nice balance between model performance and processing time. We do not recommend generating more than 1000 points.
-#' * The maximum VI radius (`max_vi_rad`) will also affect processing time quite dramatically. As distance increases, processing time will increase exponentially. However, this also depends on the spatial resolution of the input `dtm`/`dsm`. For example, a 200m distance with a 1m resolution is functionally the same as a 400m distance with a 2m resolution, in terms of processing time. We do not recommend attempting this workflow at distances beyond 2000x the input resolution. 
+#' * The more points generated, the more robust the modeling procedure will be; however, more points will also increase processing time for subsequent functions in the workflow. The default is set to 200, which should balance model performance and processing time. We do not recommend generating more than 1000 points.
+#' * As maximum VI radius (`max_vi_rad`) increases, processing time will increase exponentially. However, this also depends on the spatial resolution of the input `dtm`/`dsm`. For example, a 200m radius with a 1m resolution is functionally the same as a 400m distance with a 2m resolution, in terms of processing time. We do not recommend attempting this workflow at distances beyond 2000x the input resolution.. 
 #' @param dtm SpatRaster. Digital terrain model at finest resolution available
 #' @param dsm SpatRaster. Digital surface model at finest resolution available
 #' @param num_pts Numeric. The number of points generated

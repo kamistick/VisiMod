@@ -19,13 +19,14 @@ gen_pts(dtm, dsm, num_pts = 200, max_vi_rad = terra::res(dtm)[1] * 500)
 data.frame with columns 'x' and 'y'
 }
 \description{
-The second suggested function in the VisiMod workflow, following \code{\link[=prep_dems]{prep_dems()}}. Function that generates a user-defined number of randomly distributed points within a study area at an appropriate distance from the study area boundary. Study area extent defined by input digital terrain model (DTM) and digital surface model (DSM). These points are intended for use as training and validation points in the VisiMod visibility modeling workflow.
+This function generates a user-defined number of randomly distributed points within a study area at an appropriate distance from the study area boundary. The study area extent is defined by the input digital terrain model (DTM) and digital surface model (DSM). These points are intended for use as training and validation points in the VisiMod visibility modeling workflow.
 }
 \details{
 \itemize{
+\item This is the second suggested function in the VisiMod workflow, following \code{\link[=prep_dems]{prep_dems()}}.
 \item \code{dtm} and \code{dsm} SpatRasters can be defined using the terra library. They should have the same coordinate system, resolution, extent, and origin.
-\item The more points generated, the more robust the modeling procedure will be; however, more points will also increase total processing time for subsequent functions in the workflow. The default is set to 200, which should achieve a nice balance between model performance and processing time. We do not recommend generating more than 1000 points.
-\item The maximum VI radius (\code{max_vi_rad}) will also affect processing time quite dramatically. As distance increases, processing time will increase exponentially. However, this also depends on the spatial resolution of the input \code{dtm}/\code{dsm}. For example, a 200m distance with a 1m resolution is functionally the same as a 400m distance with a 2m resolution, in terms of processing time. We do not recommend attempting this workflow at distances beyond 2000x the input resolution.
+\item The more points generated, the more robust the modeling procedure will be; however, more points will also increase processing time for subsequent functions in the workflow. The default is set to 200, which should balance model performance and processing time. We do not recommend generating more than 1000 points.
+\item As maximum VI radius (\code{max_vi_rad}) increases, processing time will increase exponentially. However, this also depends on the spatial resolution of the input \code{dtm}/\code{dsm}. For example, a 200m radius with a 1m resolution is functionally the same as a 400m distance with a 2m resolution, in terms of processing time. We do not recommend attempting this workflow at distances beyond 2000x the input resolution..
 }
 }
 \examples{

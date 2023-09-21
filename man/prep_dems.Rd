@@ -16,10 +16,25 @@ prep_dems(in_dtm, in_dsm, out_dtm, out_dsm)
 \item{out_dsm}{Character. File name for saving your output DSM. Only used if NAs are found and filled.}
 }
 \value{
-If \code{dtm} and \code{dsm} are spatially aligned, a list with two SpatRasters: \code{dtm} and \code{dsm}. If interior NAs were found, the returned SpatRasters will be filled. If not, the original SpatRasters will be returned.
+If the \code{dtm} and \code{dsm} are spatially aligned, it returns a list with two SpatRasters: \code{dtm} and \code{dsm}. If interior NAs were found, the returned SpatRasters will be filled. If not, the original SpatRasters will be returned.
 }
 \description{
-The first suggested function in the VisiMod workflow. This workflow relies on two main input digital elevation models (DEMs): (1) a digital terrain model (DTM), a raster dataset where each pixel value represents the elevation of the ground surface; and (2) a digital surface model (DSM), a raster dataset where each pixel represents the elevation of the ground plus any above-ground features (e.g., trees). It is recommended that these DEMs are generated at a high spatial resolution (e.g., 1m) from lidar data. This function ensures that both of these inputs are suitable for use in the VisiMod workflow. It begins by checking whether the two datasets are spatially aligned (same CRS, extent, resolution, origin, and number of rows/columns). If not, the function terminates and the user is asked to ensure proper alignment before proceeding with other VisiMod functions. If so, a secondary check is performed to determine if they are in appropriate projected coordinate systems, where linear units are measured in meters (e.g., UTM). If not, the function terminates and the user is asked to reproject the data before proceeding with other VisiMod functions. If so, a tertiary check is performed to determine if there are any NA cells within the interior of either dataset. Interior NA values (i.e., within a polygon representing the outer dimensions of the data), will be problematic for VisiMod. If present, the function will fill these NA values using focal means from surrounding, non-NA pixels and output new DEMs. The resulting NA-free DEMs should be used throughout the remainder of the VisiMod workflow.
+This function performs three checks to determine if data are ready for the VisiMod workflow:
+\itemize{
+\item (1) Are the two input SpatRasters are spatially aligned (same CRS, extent, resolution, origin, and number of rows/columns)?
+\item (2) Are the two input SpatRasters in appropriate projected coordinate systems, where linear units are measured in meters (e.g., UTM)?
+\item (3) Are there any NA cells within the interior of either SpatRaster?
+}
+
+Interior NA values (i.e., within a polygon representing the outer dimensions of the data), will be problematic for VisiMod. If present, the function will fill these NA values using focal means from surrounding, non-NA pixels and output new DEMs.
+}
+\details{
+\itemize{
+\item This is the first function in the suggested VisiMod workflow
+\item This workflow relies on two main input digital elevation models (DEMs): (1) a digital terrain model (DTM), a raster dataset where each pixel value represents the elevation of the ground surface; and (2) a digital surface model (DSM), a raster dataset where each pixel represents the elevation of the ground plus any above-ground features (e.g., trees).
+\item If any of the three checks fail, the function terminates and the user is asked to remedy noted issue with the data.
+\item The resulting NA-free DEMs should be used throughout the remainder of the VisiMod workflow.
+}
 }
 \examples{
 # read in your dtm and dsm
