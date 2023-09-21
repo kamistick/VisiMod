@@ -36,7 +36,7 @@
 #' writeRaster(multiband_ras, "C:\\proj1\\vi_map.tif")
 
 
-VisiMod <- function(dtm, dsm, num_pts, dist, vi_type, vi_fov, vi_azi, save_dir = getwd(), cores = floor(parallel::detectCores()/2)){
+VisiMod <- function(dtm, dsm, num_pts, dist, vi_type, vi_fov=180, vi_azi=0, save_dir = getwd(), cores = floor(parallel::detectCores()/2)){
   
   message(paste0(Sys.time(), ": Generating points..."))
   gpt <- gen_pts(dtm, dsm, num_pts, dist)
@@ -61,7 +61,7 @@ VisiMod <- function(dtm, dsm, num_pts, dist, vi_type, vi_fov, vi_azi, save_dir =
       mod <- mod_vi(df, d, cross_validate = FALSE, tune = F, cores)
       message(paste0(Sys.time(), ": Mapping..."))
       vimap <- map_vi(mod$ranger_mod, preds, cores, T, file.path(save_dir, "vi.tif"))
-      names(vimap) <- paste0("vi_d", as.character(d), "_f", as.character(fov), "_a", as.character(az))
+      names(vimap) <- paste0("vi_d", as.character(d), "_f360")
       rass <- c(rass, vimap)
     }
     #message(paste0(Sys.time(), ": Modeling..."))
