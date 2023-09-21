@@ -3,7 +3,7 @@
 #' This function takes a digital terrain model (DTM) and a digital surface model (DSM) and builds a predictive model to map modeled visibility index (VI) across the study area. This function sequentially combines the full suite of VisiMod functions ((1) [VisiMod::prep_dems()] (2) [VisiMod::gen_pts()], (3) [VisiMod::calc_vi()], (4) [VisiMod::gen_preds()], (5) [VisiMod::mod_vi()], and [VisiMod::map_vi()]) to return a wall-to-wall SpatRaster of VI values.       
 #' 
 #' @details
-#' * This function assumes default parameters for some of the internal functions. If users desire more control over these parameters they should execute the workflow in the order laid out in this function's description. 
+#' * This function assumes default parameters for some of the internal functions ([VisiMod::gen_preds()] and [VisiMod::mod_vi()]). For [VisiMod::gen_preds()] a default aggregation factor of 10 is assumed. For [VisiMod::mod_vi()] `cross_validate` and `tune` are assumed to be `FALSE`. See respective function details for more. If users desire more control over these parameters they should execute the workflow in the order laid out in this function's description. 
 #' * `dtm` and `dsm` SpatRasters can be defined using the terra library. They should have the same coordinate system, resolution, extent, and origin.
 #' * The more points (`num_pts`) generated, the more robust the modeling procedure will be; however, more points will also increase processing time for subsequent functions in the workflow. The default is set to 200, which should balance model performance and processing time. We do not recommend generating more than 1000 points.
 #' * Processing time will increase exponentially with increasing distances (`dist`). However, this also depends on the spatial resolution of the input `dtm`/`dsm`. For example, looking at 200m with a 1m resolution is functionally the same as a 400m distance with a 2m resolution, in terms of processing time. We do not recommend attempting this workflow at distances beyond 2000x the input resolution.
@@ -19,7 +19,7 @@
 #' @param vi_azi Numeric. Defines the azimuth, or central viewing direction, in degrees, of the directional wedge used for VI calculation.  Only used if vi_type == "directional_single". Values must be >= 0 and < 360.
 #' @param save_dir Character. The directory where intermediary and output files will be saved. Default is your working directory.
 #' @param cores Numeric. The number of cores used for parallel processing of VI calculation, modeling, and mapping. The default number of cores is half of the cores on your machine.
-#' @return A SpatRaster, or list of SpatRasters, of mapped VI with a potential range of 0-1.
+#' @return Returns a list of SpatRasters of mapped VI with a potential range of 0-1. If only one combination of distance, fov, and azimuth are considered, the list will have a length of 1 and the map of VI can be accessed using VisiMod_fxn_output[[1]] where VisiMod_fxn_output <- VisiMod(...).
 #' 
 #' @export
 #' @examples
