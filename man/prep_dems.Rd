@@ -16,7 +16,7 @@ prep_dems(in_dtm, in_dsm, out_dtm, out_dsm)
 \item{out_dsm}{Character. File name for saving your output DSM. Only used if NAs are found and filled.}
 }
 \value{
-If the \code{dtm} and \code{dsm} are spatially aligned, it returns a list with two SpatRasters: \code{dtm} and \code{dsm}. If interior NAs were found, the returned SpatRasters will be filled. If not, the original SpatRasters will be returned.
+If the \code{dtm} and \code{dsm} are spatially aligned, it returns a list with two SpatRasters: \code{dtm} and \code{dsm}. If interior NAs were found, the returned SpatRasters will be filled. If no interior NAs are found, the original SpatRasters will be returned.
 }
 \description{
 This function performs three checks to determine if data are ready for the VisiMod workflow:
