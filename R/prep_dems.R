@@ -19,7 +19,7 @@
 #' @param in_dsm SpatRaster. Digital surface model at finest resolution available.
 #' @param out_dtm Character. File name for saving your output DTM. Only used if NAs are found and filled.
 #' @param out_dsm Character. File name for saving your output DSM. Only used if NAs are found and filled.
-#' @return If the `dtm` and `dsm` are spatially aligned, it returns a list with two SpatRasters: `dtm` and `dsm`. If interior NAs were found, the returned SpatRasters will be filled. If not, the original SpatRasters will be returned.
+#' @return If the `dtm` and `dsm` are spatially aligned, it returns a list with two SpatRasters: `dtm` and `dsm`. If interior NAs were found, the returned SpatRasters will be filled. If no interior NAs are found, the original SpatRasters will be returned.
 #'
 #' @export
 #' @examples

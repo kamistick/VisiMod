@@ -8,7 +8,7 @@
 #' 
 #' @details
 #' * This is the third suggested function in the VisiMod workflow, following (1) [VisiMod::prep_dems()] and (2) [VisiMod::gen_pts()]. 
-#' * `dtm` and `dsm` SpatRasters can be defined using the terra library. They should have the same coordinate system, resolution, extent, and origin.
+#' * `dtm` and `dsm` SpatRasters can be defined using the terra library. They should have the same coordinate system, resolution, extent, and origin. They must be written on disk, they cannot only be held in memory. 
 #' * `pts` can be defined using the [VisiMod::gen_pts()] function within the VisiMod library. But, they can also be created through many other means. For example, one could derive a data.frame of x-y coordinate pairs from a SpatVector using `terra::crds()` or from an sf object using `sf::st_coordinates()`. However, using [VisiMod::gen_pts()] is advantageous, as it ensures that points are (1) in the same coordinate system as `dtm` and `dsm`; and (2) are at least `vi_rad` from the edge of the study area.
 #' * `vi_rad` should not exceed the `max_vi_rad` defined in the previous [VisiMod::gen_pts()] step in the VisiMod workflow. `vi_rad` will affect processing time quite dramatically. As distance increases, processing time will increase exponentially.
 #' * Note that this function is parallelized and can leverage as many cores as your computer has available to speed up processing. As with all parallel processing in R, however, there is an overhead cost associated with setting up parallel operations. So, for small numbers of input points (`pts`) and/or short viewing radii (`view_rad`), using many cores may not speed up your processing significantly.

@@ -38,6 +38,11 @@
 
 VisiMod <- function(dtm, dsm, num_pts, dist, vi_type, vi_fov=180, vi_azi=0, save_dir = getwd(), cores = floor(parallel::detectCores()/2)){
   
+  message(paste0(Sys.time(), ": Preparing rasters..."))
+  pdems <- prep_dems(dtm, dsm, pasteo(save_dir, "dtm_filled.tif"), paste0(save_dir, "dsm_filled.tif"))
+  dtm <- pdems$dtm
+  dsm <- pdems$dsm 
+  
   message(paste0(Sys.time(), ": Generating points..."))
   gpt <- gen_pts(dtm, dsm, num_pts, dist)
   
