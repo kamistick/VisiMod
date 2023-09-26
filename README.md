@@ -42,8 +42,7 @@ obstructions would be treated as vegetation. This is not recommended.
 The VisiMod package can be installed by calling
 `devtools::install_github("kamistick/VisiMod")`in the RStudio console.
 To run the following examples the following packages must be loaded:
-`VisiMod`, `terra`, `leaflet`, `httr2`, `httr`, `lidR`, `future`,
-`ggplot2`
+`VisiMod`, `terra`, `httr2`, `httr`, `lidR`, `future`, `ggplot2`
 
 ## **2 Download lidar data to prepare for VisiMod workflow**
 
@@ -149,7 +148,7 @@ plot(cat)
 
 ![](README_files/figure-gfm/plot-las-cat-1.png)<!-- -->
 
-#### **2.4 Remove Noise**
+#### **2.3.1 Remove Noise**
 
 First we’ll clean up the lidar data to remove any noise. This step can
 look very different depending on your lidar data. Some datasets are
@@ -184,7 +183,7 @@ cat_clean <- readLAScatalog(clean_dir)
 opt_filter(cat_clean) <- "-drop_class 7 18 -drop_withheld"
 ```
 
-#### **2.5 Generate Rasters**
+#### **2.3.2 Generate Rasters**
 
 Next we’ll generate our 1 meter DTM and DSM using `rasterize_terrain()`
 and `rasterize_canopy()`. This step will genereate and save a raster (in
@@ -308,12 +307,12 @@ head(gp)
 ```
 
     ##          x       y
-    ## 1 254392.3 4210479
-    ## 2 254806.5 4211583
-    ## 3 255624.3 4211408
-    ## 4 255317.4 4210752
-    ## 5 255125.8 4211715
-    ## 6 254472.3 4210830
+    ## 1 254979.8 4211598
+    ## 2 254677.5 4211639
+    ## 3 255486.5 4211604
+    ## 4 255701.4 4210880
+    ## 5 254766.8 4211167
+    ## 6 254389.1 4211231
 
 ``` r
 v <- vect(cbind(gp$x, gp$y))
@@ -392,17 +391,17 @@ head(preds$pred_pts, c(5, 10))
 ```
 
     ##          x       y elevation     slope slope_derivative     curvature
-    ## 1 254263.8 4211072  1962.282  3.517082         3.696996  0.0002666081
-    ## 2 254265.5 4211595  2007.420 10.597324        10.179141 -0.0083113323
-    ## 3 254273.1 4210880  1962.056  5.780371         9.563362  0.0016854052
-    ## 4 254273.6 4210702  1952.414 12.090441         7.474173  0.0031182637
-    ## 5 254278.0 4210951  1961.891  8.838022        17.539475  0.0050088583
-    ##   curvature_plan curvature_prof aspect_sin aspect_cos
-    ## 1  -0.0007022235   0.0009688316  0.2044818 -0.9546580
-    ## 2  -0.0072064691  -0.0011048632 -0.9224564 -0.3775824
-    ## 3  -0.0004064385   0.0020918436 -0.4506411 -0.8912237
-    ## 4   0.0018054329   0.0013128309  0.9913468 -0.1148407
-    ## 5   0.0005946159   0.0044142424  0.7442665  0.6617904
+    ## 1 254264.8 4211232  1976.993 14.585186         4.190968 -0.0012412227
+    ## 2 254299.7 4210568  1940.204  5.746247         3.998669  0.0039242159
+    ## 3 254311.7 4211176  1973.575 10.518064         4.900609  0.0008841246
+    ## 4 254328.5 4210805  1953.847  9.604412         4.729598  0.0047211025
+    ## 5 254337.1 4211708  2009.542 13.123465         3.839629 -0.0012889366
+    ##   curvature_plan curvature_prof  aspect_sin aspect_cos
+    ## 1  -0.0005731776  -6.680451e-04 -0.80857521 -0.5883423
+    ## 2   0.0038489438   7.527208e-05  0.68515107 -0.6699312
+    ## 3   0.0015217983  -6.376737e-04 -0.03376109 -0.9962656
+    ## 4   0.0043851268   3.359757e-04  0.39029921 -0.9028535
+    ## 5  -0.0006856355  -6.033011e-04  0.97217936  0.2334504
 
 ``` r
 # plot an example predictor raster
@@ -435,13 +434,13 @@ head(mod125$perf_mets)
 ```
 
     ## $r2
-    ## [1] 0.8264932
+    ## [1] 0.7749481
     ## 
     ## $rmse
-    ## [1] 0.07105915
+    ## [1] 0.07237725
     ## 
     ## $nrmse
-    ## [1] 0.1341938
+    ## [1] 0.1383702
 
 ``` r
 mod250<- mod_vi(preds$pred_pts, 250, cross_validate = TRUE, tune = FALSE, num_cores = 4)
@@ -454,13 +453,13 @@ head(mod250$perf_mets)
 ```
 
     ## $r2
-    ## [1] 0.7424491
+    ## [1] 0.6271929
     ## 
     ## $rmse
-    ## [1] 0.05387138
+    ## [1] 0.05682846
     ## 
     ## $nrmse
-    ## [1] 0.1484116
+    ## [1] 0.1538814
 
 ### **3.6 Map VI**
 

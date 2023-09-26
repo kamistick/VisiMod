@@ -25,7 +25,7 @@ Instead of calculating VI by running viewsheds at every pixel in a rasterized st
 
 VisiMod is designed to be used in wildland (i.e. undeveloped) areas. It relies on a digital surface model (DSM) that is inclusive of vegetation. If VisiMod were deployed for developed areas any aboveground obstructions would be treated as vegetation. This is not recommended. 
 
-The VisiMod package can be installed by calling `devtools::install_github("kamistick/VisiMod")`in the RStudio console. To run the following examples the following packages must be loaded: `VisiMod`, `terra`, `leaflet`, `httr2`, `httr`, `lidR`, `future`, `ggplot2` 
+The VisiMod package can be installed by calling `devtools::install_github("kamistick/VisiMod")`in the RStudio console. To run the following examples the following packages must be loaded: `VisiMod`, `terra`, `httr2`, `httr`, `lidR`, `future`, `ggplot2` 
 
 ## **2 Download lidar data to prepare for VisiMod workflow**
 
@@ -137,7 +137,7 @@ plot(cat)
 ```
 
 
-#### **2.4 Remove Noise**
+#### **2.3.1 Remove Noise**
 
 First we'll clean up the lidar data to remove any noise. This step can look very different depending on your lidar data. Some datasets are fairly clean to begin with, others may have extremely high or low noise flagged as classification 7 or 18. These points are removed by filtering. However, there may be certain high or low points that were not classified as noise, but should be. We run an additional noise filter and remove the noise flagged points a second time to ensure all extraneous points have been removed. If you have multiple cores available to work on, we suggest using them by implementing `plan(multisession, workers = 4L)` and `set_lidr_threads(4L)`, which would implement 4 cores for parallel processing. 
 
@@ -163,7 +163,7 @@ opt_filter(cat_clean) <- "-drop_class 7 18 -drop_withheld"
 
 ```
 
-#### **2.5 Generate Rasters**
+#### **2.3.2 Generate Rasters**
 
 Next we'll generate our 1 meter DTM and DSM using `rasterize_terrain()` and `rasterize_canopy()`. This step will genereate and save a raster (in TIF format) in the `lidar_dir` directory (in this example they are saved in subfolders `dtms` and `dsms`).
 
