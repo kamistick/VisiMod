@@ -3,16 +3,21 @@ VisiMod: Map Modeled Visibility Index Across Wildland Landscapes
 Katherine Mistick
 2023-09-26
 
-- <a href="#download-lidar-data-to-prepare-for-visimod-workflow"
-  id="toc-download-lidar-data-to-prepare-for-visimod-workflow"><strong>Download
-  lidar data to prepare for VisiMod workflow</strong></a>
-- <a href="#the-visimod-workflow"
-  id="toc-the-visimod-workflow"><strong>The VisiMod Workflow</strong></a>
-- <a href="#using-visimod-to-generate-an-rgb-vi-map"
-  id="toc-using-visimod-to-generate-an-rgb-vi-map"><strong>Using VisiMod()
-  to generate an RGB VI map</strong></a>
+- <a href="#1-intoduction" id="toc-1-intoduction"><strong>1
+  Intoduction</strong></a>
+- <a href="#2-download-lidar-data-to-prepare-for-visimod-workflow"
+  id="toc-2-download-lidar-data-to-prepare-for-visimod-workflow"><strong>2
+  Download lidar data to prepare for VisiMod workflow</strong></a>
+- <a href="#3-the-visimod-workflow"
+  id="toc-3-the-visimod-workflow"><strong>3 The VisiMod
+  Workflow</strong></a>
+- <a href="#4-using-visimod-to-generate-an-rgb-vi-map"
+  id="toc-4-using-visimod-to-generate-an-rgb-vi-map"><strong>4 Using
+  VisiMod() to generate an RGB VI map</strong></a>
 
 ------------------------------------------------------------------------
+
+## **1 Intoduction**
 
 The VisiMod package was built to facilitate visibility analyses. It
 provides a suite of tools that allows users to build predictive models
@@ -27,8 +32,7 @@ Instead of calculating VI by running viewsheds at every pixel in a
 rasterized study area, VisiMod allows users to build predictive models
 based on a sample of points (at which viewsheds are run using
 [terra::viewshed()](https://rdrr.io/cran/terra/man/viewshed.html)) to
-predict VI at every pixel. \[\[something here about a time
-comparison\]\]
+predict VI at every pixel.
 
 VisiMod is designed to be used in wildland (i.e. undeveloped) areas. It
 relies on a digital surface model (DSM) that is inclusive of vegetation.
@@ -41,7 +45,7 @@ To run the following examples the following packages must be loaded:
 `VisiMod`, `terra`, `leaflet`, `httr2`, `httr`, `lidR`, `future`,
 `ggplot2`
 
-## **Download lidar data to prepare for VisiMod workflow**
+## **2 Download lidar data to prepare for VisiMod workflow**
 
 ------------------------------------------------------------------------
 
@@ -52,18 +56,19 @@ typically are derived directly from lidar. The example below walks a
 user through downloading and processing four USGS 3DEP lidar tiles for
 use in the VisiMod workflow.
 
-For this example we’re going to look at a 4km<sup>2</sup> area in
-southern Utah, USA:
-
-![image](images/leaflet.png)
-
 We’ll use the National Map API, provided by the USGS, to access 3DEP
 lidar data. For more information on how to use the THM API, [click
 here](https://apps.nationalmap.gov/tnmaccess/#/). To interact with the
 TNM GUI and download data, [click
 here](https://apps.nationalmap.gov/downloader/).
 
-### **Set Up Directories**
+For this example we’re going to look at a 4km<sup>2</sup> area in
+southern Utah, USA:
+
+![image](images/leaflet.png) \*The above figure is a static image of an
+interactive leaflet map that does not render in this GitHub README.md
+
+### **2.1 Set Up Directories**
 
 First, we will set up our directories. In this example the main
 directory `lidar_dir` is a folder with four subfolders: `noise`, `dtms`,
@@ -91,7 +96,7 @@ for (folder in c("noise", "dtms", "dsms", "out_files")){
     ## [1] "Directory already exists."
     ## [1] "Directory already exists."
 
-### **Download lidar using The National Map API**
+### **2.2 Download lidar using The National Map API**
 
 Next we will search for available lidar products within our bounding
 box:
@@ -121,7 +126,7 @@ for (x in 1:length(resp_body_json(resp)[2]$items)){
 }
 ```
 
-### **Process lidar with lidR in R**
+### **2.3 Process lidar with lidR in R**
 
 Next we’ll use the [lidR package](https://r-lidar.github.io/lidRbook/)
 to process our tiles into a DTM and DSM. First we will read the files in
@@ -144,7 +149,7 @@ plot(cat)
 
 ![](README_files/figure-gfm/plot-las-cat-1.png)<!-- -->
 
-#### **Remove Noise**
+#### **2.4 Remove Noise**
 
 First we’ll clean up the lidar data to remove any noise. This step can
 look very different depending on your lidar data. Some datasets are
@@ -179,7 +184,7 @@ cat_clean <- readLAScatalog(clean_dir)
 opt_filter(cat_clean) <- "-drop_class 7 18 -drop_withheld"
 ```
 
-#### **Generate Rasters**
+#### **2.5 Generate Rasters**
 
 Next we’ll generate our 1 meter DTM and DSM using `rasterize_terrain()`
 and `rasterize_canopy()`. This step will genereate and save a raster (in
@@ -211,7 +216,7 @@ dtm_tiles <- list.files(dtm_dir, pattern = "*.tif", full.names = T)
 dtm_rasts <- lapply(dtm_tiles, rast)
 dtm_sprc <- sprc(dtm_rasts)
 dtm <- mosaic(dtm_sprc)
-plot(dtm)
+plot(dtm, main = "Digital Terrain Model", las = 1)
 ```
 
 ![](README_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
@@ -228,7 +233,7 @@ dsm_tiles <- list.files(dsm_dir, pattern = "*.tif", full.names = T)
 dsm_rasts <- lapply(dsm_tiles, rast)
 dsm_sprc <- sprc(dsm_rasts)
 dsm <- mosaic(dsm_sprc)
-plot(dsm)
+plot(dsm, main = "Digital Surface Model", las = 1)
 ```
 
 ![](README_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
@@ -243,16 +248,16 @@ canopy height:
 
 ``` r
 chm <- dsm-dtm
-plot(chm)
+plot(chm, main = "Canopy Height", las = 1)
 ```
 
 ![](README_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
 
-## **The VisiMod Workflow**
+## **3 The VisiMod Workflow**
 
 ------------------------------------------------------------------------
 
-### **1 Prepare Digital Elevation Models**
+### **3.1 Prepare Digital Elevation Models**
 
 The first step in the VisiMod workflow is to run your DTM and DSM
 through the `prep_dems()` function. This function checks if the two
@@ -278,7 +283,7 @@ dsm <- rast(file.path(lidar_dir, "out_files", "dsm.tif"))
 pdems <- prep_dems(dtm, dsm, file.path(lidar_dir, "out_files","dtm_filled.tif"), file.path(lidar_dir, "out_files","dsm_filled.tif"))
 ```
 
-### **2 Generate Points**
+### **3.2 Generate Points**
 
 The second step in the VisiMod workflow is to generate x, y locations to
 be used as training and validation points for building one or more VI
@@ -303,22 +308,22 @@ head(gp)
 ```
 
     ##          x       y
-    ## 1 255239.8 4211167
-    ## 2 255386.9 4210695
-    ## 3 254274.4 4210989
-    ## 4 255333.8 4210861
-    ## 5 254895.4 4211180
-    ## 6 254313.2 4211301
+    ## 1 254392.3 4210479
+    ## 2 254806.5 4211583
+    ## 3 255624.3 4211408
+    ## 4 255317.4 4210752
+    ## 5 255125.8 4211715
+    ## 6 254472.3 4210830
 
 ``` r
 v <- vect(cbind(gp$x, gp$y))
-plot(pdems$dsm)
+plot(pdems$dsm, main = "Point locations overlaid on DSM", las = 1)
 plot(v, add=TRUE)
 ```
 
 ![](README_files/figure-gfm/gen-pts-1.png)<!-- -->
 
-### **3 Calculate VI**
+### **3.3 Calculate VI**
 
 The next step in the VisiMod workflow is `calc_vi()` which calculates VI
 at each point location. VI represents the proportion of area visible
@@ -342,7 +347,7 @@ df <- cv    # grab a copy of cv so we don't add any unnecessary columns to our w
 
 pal = colorRampPalette(c("black", "white"))
 df$order = findInterval(df$vi_125, sort(df$vi_125))
-plot(pdems$dsm-dtm, legend= TRUE)
+plot(pdems$dsm-dtm, legend= TRUE, main = "Points colored by VI", las= 1)
 plot(v, add=TRUE, col = pal(nrow(df))[df$order])
 legend(x = 254000, y = 4212000,
        col = c("black", "white"), pch = c(19,19),
@@ -351,7 +356,7 @@ legend(x = 254000, y = 4212000,
 
 ![](README_files/figure-gfm/calc-vi-1.png)<!-- -->
 
-### **4 Generate Model Predictors**
+### **3.4 Generate Model Predictors**
 
 Following the calculation of VI at each point, next in the VisiMod
 workflow is the generation of predictors at each point. The
@@ -387,26 +392,26 @@ head(preds$pred_pts, c(5, 10))
 ```
 
     ##          x       y elevation     slope slope_derivative     curvature
-    ## 1 254269.0 4210505  1936.144 10.956374        17.273523 -0.0041740956
-    ## 2 254274.2 4211505  2004.471 16.563305         4.316786 -0.0003721081
-    ## 3 254274.4 4210989  1958.277  7.605523        16.207669 -0.0071026596
-    ## 4 254285.0 4211384  1996.699 15.298848         8.244572 -0.0003576484
-    ## 5 254285.6 4210933  1962.483  8.625675        21.108549  0.0030124446
+    ## 1 254263.8 4211072  1962.282  3.517082         3.696996  0.0002666081
+    ## 2 254265.5 4211595  2007.420 10.597324        10.179141 -0.0083113323
+    ## 3 254273.1 4210880  1962.056  5.780371         9.563362  0.0016854052
+    ## 4 254273.6 4210702  1952.414 12.090441         7.474173  0.0031182637
+    ## 5 254278.0 4210951  1961.891  8.838022        17.539475  0.0050088583
     ##   curvature_plan curvature_prof aspect_sin aspect_cos
-    ## 1   3.529037e-04  -0.0045269993  0.9233380  0.3723001
-    ## 2  -8.163127e-05  -0.0002904768 -0.9079582 -0.4188400
-    ## 3  -1.790710e-03  -0.0053119497  0.9666404  0.2093625
-    ## 4   8.333471e-04  -0.0011909955 -0.9672533 -0.2537587
-    ## 5  -1.209667e-03   0.0042221112  0.8586871  0.5123970
+    ## 1  -0.0007022235   0.0009688316  0.2044818 -0.9546580
+    ## 2  -0.0072064691  -0.0011048632 -0.9224564 -0.3775824
+    ## 3  -0.0004064385   0.0020918436 -0.4506411 -0.8912237
+    ## 4   0.0018054329   0.0013128309  0.9913468 -0.1148407
+    ## 5   0.0005946159   0.0044142424  0.7442665  0.6617904
 
 ``` r
 # plot an example predictor raster
-plot(preds$pred_rast[["slope_aspect_sin_mean_8"]])
+plot(preds$pred_rast[["slope_aspect_sin_mean_8"]], main = "Predictor Raster: Focal Mean Slope Aspect Sine r = 8 pixels ", las = 1)
 ```
 
 ![](README_files/figure-gfm/gen-preds-1.png)<!-- -->
 
-### **5 Build Random Forest Model**
+### **3.5 Build Random Forest Model**
 
 Now that we have points with VI and predictor values we can move to the
 next step in VisiMod which is to build a predictive model using
@@ -430,13 +435,13 @@ head(mod125$perf_mets)
 ```
 
     ## $r2
-    ## [1] 0.8041906
+    ## [1] 0.8264932
     ## 
     ## $rmse
-    ## [1] 0.07715502
+    ## [1] 0.07105915
     ## 
     ## $nrmse
-    ## [1] 0.1433014
+    ## [1] 0.1341938
 
 ``` r
 mod250<- mod_vi(preds$pred_pts, 250, cross_validate = TRUE, tune = FALSE, num_cores = 4)
@@ -449,15 +454,15 @@ head(mod250$perf_mets)
 ```
 
     ## $r2
-    ## [1] 0.6821234
+    ## [1] 0.7424491
     ## 
     ## $rmse
-    ## [1] 0.06254355
+    ## [1] 0.05387138
     ## 
     ## $nrmse
-    ## [1] 0.1635197
+    ## [1] 0.1484116
 
-### **6 Map VI**
+### **3.6 Map VI**
 
 The final step in the VisiMod workflow is to map VI across the entire
 study area, using the random forest model built in `mod_vi()` and the
@@ -468,39 +473,49 @@ radii (125 m and 250 m).
 
 ``` r
 map125 <- map_vi(mod125$ranger_mod, preds$pred_rast, 4, FALSE)
-plot(map125)
+plot(map125, main = "Omnidirectional VI at a 125 m radius", las=1)
 ```
 
 ![](README_files/figure-gfm/map-vi-1.png)<!-- -->
 
 ``` r
 map250 <- map_vi(mod250$ranger_mod, preds$pred_rast, 4, FALSE)
-plot(map250)
+plot(map250, main = "Omnidirectional VI at a 250 m radius", las=1)
 ```
 
 ![](README_files/figure-gfm/map-vi-2.png)<!-- -->
 
-## **Using VisiMod() to generate an RGB VI map**
+## **4 Using VisiMod() to generate an RGB VI map**
 
 ------------------------------------------------------------------------
 
-### **Run the Function**
+### **4.1 Run the Function**
 
-Now that we have prepared our DTM and DSM we are ready to run some
-functions from VisiMod. We’ll start with the all-encompassing
-`VisiMod()` function. This function runs through the entire VisiMod
-workflow and returns a list of rasters with mapped VI values. First we
-have to define our input rasters, then we run `VisiMod()`. In this
-example we are going to generate three VI maps, at azimuths of 0 degrees
-(looking north), 120 degrees (looking southeast), and 240 degrees
-(looking southwest) each with a field of view of 120 degrees.
+The all-encompassing `VisiMod()` function runs through the entire
+VisiMod workflow and returns a list of rasters with mapped VI values.
+All users must do is provide an input DTM and DSM, then they can run
+`VisiMod()`. In this example we are going to generate three VI maps, at
+azimuths of 0 degrees (looking north), 120 degrees (looking southeast),
+and 240 degrees (looking southwest) (`vi_azi = c(0,120,240)`) each with
+a field of view of 120 degrees (`vi_fov = 120`).
+
+We recommend running `VisiMod()` if you are only interested in the
+output VI map(s). If you are interested in saving intermediary outputs
+(the points used in modeling, the ranger model objects, etc.) we
+recommend running the workflow described in section 3.
+
+`VisiMod()` makes assumptions for input parameters in two of the
+internal functions: `gen_preds` and `mod_vi()`. For `gen_preds()` a
+default aggregation factor of 10 is assumed. For `mod_vi()`
+`cross_validate` and `tune` are assumed to be `FALSE`. If users wish to
+toggle these parameters they should run the workflow described in
+section 3.
 
 Running this example with 4 cores resulted in a total run time of 3
 minutes and 25 seconds. Many messages will print indicating progress.
 When working with larger datasets it is not unusual for `calc_vi()` and
-`gen_preds()` to perform slowly. Notably, the step that generates
-predictors at 32 pixel radii tends to be slow, if it appears frozen at
-this step please be patient.
+`gen_preds()` to perform slowly. Also notable, the step that generates
+predictors at 32 pixel radii tends to be slow..
 
 ``` r
 # define your input params
@@ -522,7 +537,7 @@ channel with which they will be visualized in the next step.
 
 ``` r
 # plot the dsm as our basemap (zoom in a bit)
-plot(dsm, ext = ext(dsm)-750)
+plot(dsm, ext = ext(dsm)-750, main = "Example of Wedge() Function")
 
 # use the midpoint as the point from which our wedge will be drawn 
 x <- (ext(dtm)[2]+ext(dtm)[1])/2
@@ -540,10 +555,10 @@ plot(w, col = "blue", add=TRUE)
 
 ![](README_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
 
-### **Using plotRGB() to plot VI**
+### **4.2 Using plotRGB() to plot VI**
 
 The first option for plotting VI is using the plotRGB() function from
-the terra library. This is an easy way to plot 3 band rasters
+the `terra` library. This is an easy way to plot 3 band rasters
 
 Since `VisiMod()` returns a list of three single-band rasters, we must
 combine them into a multiband raster before we can plot an RGB map. We
@@ -563,7 +578,7 @@ plotRGB(vi, r=1,g=2,b=3, scale = 1, stretch="lin", axes = TRUE, mar = c(3,3), xl
 
 ![](README_files/figure-gfm/plot-visimod-output-1.png)<!-- -->
 
-### **Using ggplot2 to plot RGB VI map**
+### **4.3 Using ggplot2 to plot RGB VI map**
 
 `ggplot2` is a powerful and popular library for creating graphics. While
 not built explicitly to plot raster data, it can easily plot rasters
@@ -583,8 +598,9 @@ p <- ggplot(data=vi_df, aes(x=x,y=y)) +
   geom_raster(fill = rgb(r = vi_df$vi_d125_f120_a0,
                          g=vi_df$vi_d125_f120_a120,
                          b=vi_df$vi_d125_f120_a240, maxColorValue =1)) +
-  ylab("UTM (zone 12N) Northing")+
-  xlab("UTM (zone 12N) Easting") + 
+  ylab("UTM Northing")+
+  xlab("UTM Easting") + 
+  ggtitle("Directional VI") +
   scale_x_continuous(expand = expansion(c(0,0)))+
   scale_y_continuous(expand = expansion(c(0,0)))+
   theme(panel.background = element_rect(color = NA, fill = NA),
