@@ -54,7 +54,7 @@ VisiMod <- function(dtm, dsm, num_pts, dist, vi_type, vi_fov=180, vi_azi=0, save
     
     message(paste0(Sys.time(), ": Generating predictors..."))
     gpd <- gen_preds(dtm, dsm, gpt, vi_type, vi_fov, vi_azi, 10L, save=TRUE, save_dir)
-    preds <- rast(paste0(save_dir, "\\predictor_raster_stack_f360.tif"))
+    #preds <- rast(paste0(save_dir, "\\predictor_raster_stack_f360.tif"))
     
     rass <- c()
     for (d in dist){
@@ -65,7 +65,7 @@ VisiMod <- function(dtm, dsm, num_pts, dist, vi_type, vi_fov=180, vi_azi=0, save
       df <- merge(gpd$pred_pts, cv_df_dist, by=c("x", "y"))
       mod <- mod_vi(df, d, cross_validate = FALSE, tune = F, cores)
       message(paste0(Sys.time(), ": Mapping..."))
-      vimap <- map_vi(mod$ranger_mod, preds, cores, T, file.path(save_dir, "vi.tif"))
+      vimap <- map_vi(mod$ranger_mod, gpd$pred_rast, cores, T, file.path(save_dir, "vi.tif"))
       names(vimap) <- paste0("vi_d", as.character(d), "_f360")
       rass <- c(rass, vimap)
     }
@@ -89,7 +89,7 @@ VisiMod <- function(dtm, dsm, num_pts, dist, vi_type, vi_fov=180, vi_azi=0, save
         
         message(paste0(Sys.time(), ": Generating predictors..."))
         gpd <- gen_preds(dtm, dsm, gpt, vi_type, fov, az, 10L, save=TRUE, save_dir)
-        preds <- rast(paste0(save_dir, "\\predictor_raster_stack_f", as.character(fov), "_a", as.character(az), ".tif"))
+        #preds <- rast(paste0(save_dir, "\\predictor_raster_stack_f", as.character(fov), "_a", as.character(az), ".tif"))
         
         for (d in dist){
           message(paste0(Sys.time(), ": Modeling..."))
@@ -99,7 +99,7 @@ VisiMod <- function(dtm, dsm, num_pts, dist, vi_type, vi_fov=180, vi_azi=0, save
           df <- merge(gpd$pred_pts, cv_df_dist, by=c("x", "y"))
           mod <- mod_vi(df, d, cross_validate = FALSE, tune = F, cores)
           message(paste0(Sys.time(), ": Mapping..."))
-          vimap <- map_vi(mod$ranger_mod, preds, cores, T, file.path(save_dir, "vi.tif"))
+          vimap <- map_vi(mod$ranger_mod, gpd$pred_rast, cores, T, file.path(save_dir, "vi.tif"))
           names(vimap) <- paste0("vi_d", as.character(d), "_f", as.character(fov), "_a", as.character(az))
           rass <- c(rass, vimap)
         }
