@@ -1,7 +1,7 @@
 VisiMod: Map Modeled Visibility Index Across Wildland Landscapes
 ================
 Katherine Mistick
-2023-09-25
+2023-09-26
 
 - <a href="#download-lidar-data-to-prepare-for-visimod-workflow"
   id="toc-download-lidar-data-to-prepare-for-visimod-workflow"><strong>Download
@@ -55,8 +55,7 @@ use in the VisiMod workflow.
 For this example we’re going to look at a 4km<sup>2</sup> area in
 southern Utah, USA:
 
-<div id="htmlwidget-497d0703b67d3a57ea11" style="width:700px;height:480px;" class="leaflet html-widget "></div>
-<script type="application/json" data-for="htmlwidget-497d0703b67d3a57ea11">{"x":{"options":{"crs":{"crsClass":"L.CRS.EPSG3857","code":null,"proj4def":null,"projectedBounds":null,"options":{}}},"calls":[{"method":"addProviderTiles","args":["Esri.WorldImagery",null,null,{"errorTileUrl":"","noWrap":false,"detectRetina":false}]},{"method":"addRectangles","args":[38.004325,-113.779726,38.0228,-113.8018,null,null,{"interactive":true,"className":"","stroke":true,"color":"yellow","weight":5,"opacity":0.5,"fill":true,"fillColor":"transparent","fillOpacity":0.2,"smoothFactor":1,"noClip":false},null,null,null,{"interactive":false,"permanent":false,"direction":"auto","opacity":1,"offset":[0,0],"textsize":"10px","textOnly":false,"className":"","sticky":true},null]}],"limits":{"lat":[38.004325,38.0228],"lng":[-113.8018,-113.779726]}},"evals":[],"jsHooks":[]}</script>
+![image](images/leaflet.png)
 
 We’ll use the National Map API, provided by the USGS, to access 3DEP
 lidar data. For more information on how to use the THM API, [click
@@ -86,6 +85,11 @@ for (folder in c("noise", "dtms", "dsms", "out_files")){
   }
 }
 ```
+
+    ## [1] "Directory already exists."
+    ## [1] "Directory already exists."
+    ## [1] "Directory already exists."
+    ## [1] "Directory already exists."
 
 ### **Download lidar using The National Map API**
 
@@ -117,11 +121,6 @@ for (x in 1:length(resp_body_json(resp)[2]$items)){
 }
 ```
 
-    ## [1] "Downloading USGSLidarPointCloudUT_StatewideSouth_2020_A2012STH5410"
-    ## [1] "Downloading USGSLidarPointCloudUT_StatewideSouth_2020_A2012STH5411"
-    ## [1] "Downloading USGSLidarPointCloudUT_StatewideSouth_2020_A2012STH5510"
-    ## [1] "Downloading USGSLidarPointCloudUT_StatewideSouth_2020_A2012STH5511"
-
 ### **Process lidar with lidR in R**
 
 Next we’ll use the [lidR package](https://r-lidar.github.io/lidRbook/)
@@ -139,15 +138,11 @@ cat <- readLAScatalog(lidar_dir)
 lidR:::catalog_laxindex(cat)
 ```
 
-![](README_files/figure-gfm/read-las-cat-intial-1.png)<!-- -->
-
-    ##   |                                                                                                            |                                                                                                    |   0%  |                                                                                                            |=========================                                                                           |  25%  |                                                                                                            |==================================================                                                  |  50%  |                                                                                                            |===========================================================================                         |  75%  |                                                                                                            |====================================================================================================| 100%
-
 ``` r
 plot(cat)
 ```
 
-![](README_files/figure-gfm/read-las-cat-intial-2.png)<!-- -->
+![](README_files/figure-gfm/plot-las-cat-1.png)<!-- -->
 
 #### **Remove Noise**
 
@@ -167,11 +162,7 @@ would implement 4 cores for parallel processing.
 # set up parallel processing, if available
 plan(multisession, workers = 4L)
 set_lidr_threads(4L)
-```
 
-    ## This installation of lidR has not been compiled with OpenMP support
-
-``` r
 # define directoy where clean laz files will be written
 clean_dir <- file.path(lidar_dir, "noise")
 
@@ -182,22 +173,7 @@ opt_filter(cat) <- "-drop_class 7 18 -drop_withheld"
 opt_output_files(cat) <- file.path(clean_dir, "{ORIGINALFILENAME}")
 opt_laz_compression(cat) <- TRUE
 classify_noise(cat, sor())
-```
 
-![](README_files/figure-gfm/clean-noise-1.png)<!-- -->
-
-    ##   |                                                                                                            |                                                                                                    |   0%  |                                                                                                            |=========================                                                                           |  25%  |                                                                                                            |==================================================                                                  |  50%  |                                                                                                            |===========================================================================                         |  75%  |                                                                                                            |====================================================================================================| 100%
-
-    ## class       : LAScatalog (v1.4 format 6)
-    ## extent      : 254000, 256000, 4210000, 4212000 (xmin, xmax, ymin, ymax)
-    ## coord. ref. : NAD83(2011) / UTM zone 12N + NAVD88 height - Geoid12B (Metres) 
-    ## area        : 4 km²
-    ## points      : 21.68 million points
-    ## density     : 5.4 points/m²
-    ## density     : 4.5 pulses/m²
-    ## num. files  : 4
-
-``` r
 # read back in cleaned catalog and filter points classified as noise or withheld
 cat_clean <- readLAScatalog(clean_dir)
 opt_filter(cat_clean) <- "-drop_class 7 18 -drop_withheld"
@@ -218,41 +194,11 @@ dsm_dir <- file.path(lidar_dir, "dsms")
 # generate dtms
 opt_output_files(cat_clean) <- file.path(dtm_dir, "dtm_{XLEFT}_{YBOTTOM}")
 rasterize_terrain(cat_clean, res= 1, algorithm = tin(), overwrite = TRUE)
-```
 
-![](README_files/figure-gfm/laz-to-tif-1.png)<!-- -->
-
-    ##   |                                                                                                            |                                                                                                    |   0%  |                                                                                                            |=========================                                                                           |  25%  |                                                                                                            |==================================================                                                  |  50%  |                                                                                                            |===========================================================================                         |  75%  |                                                                                                            |====================================================================================================| 100%
-
-    ## class       : SpatRaster 
-    ## dimensions  : 2000, 2000, 1  (nrow, ncol, nlyr)
-    ## resolution  : 1, 1  (x, y)
-    ## extent      : 254000, 256000, 4210000, 4212000  (xmin, xmax, ymin, ymax)
-    ## coord. ref. : NAD83(2011) / UTM zone 12N (EPSG:6341) 
-    ## source      : rasterize_terrain.vrt 
-    ## name        :       Z 
-    ## min value   : 1851.18 
-    ## max value   : 2045.34
-
-``` r
 # generate dsms
 opt_output_files(cat_clean) <- file.path(dsm_dir, "dsm_{XLEFT}_{YBOTTOM}")
 rasterize_canopy(cat_clean, res = 1, dsmtin(), overwrite= TRUE)
 ```
-
-![](README_files/figure-gfm/laz-to-tif-2.png)<!-- -->
-
-    ##   |                                                                                                            |                                                                                                    |   0%  |                                                                                                            |=========================                                                                           |  25%  |                                                                                                            |==================================================                                                  |  50%  |                                                                                                            |===========================================================================                         |  75%  |                                                                                                            |====================================================================================================| 100%
-
-    ## class       : SpatRaster 
-    ## dimensions  : 2000, 2000, 1  (nrow, ncol, nlyr)
-    ## resolution  : 1, 1  (x, y)
-    ## extent      : 254000, 256000, 4210000, 4212000  (xmin, xmax, ymin, ymax)
-    ## coord. ref. : NAD83(2011) / UTM zone 12N (EPSG:6341) 
-    ## source      : rasterize_canopy.vrt 
-    ## name        :        Z 
-    ## min value   : 1851.396 
-    ## max value   : 2047.705
 
 Next we have to mosaic all four DTM tiles together to get a continuous
 DTM for the study area. First we’ll read in each individual DTM raster
@@ -268,7 +214,7 @@ dtm <- mosaic(dtm_sprc)
 plot(dtm)
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
 
 ``` r
 writeRaster(dtm, file.path(lidar_dir, "out_files", "dtm.tif"), overwrite=TRUE)
@@ -285,7 +231,7 @@ dsm <- mosaic(dsm_sprc)
 plot(dsm)
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
 
 ``` r
 writeRaster(dsm, file.path(lidar_dir, "out_files", "dsm.tif"), overwrite=TRUE)
@@ -300,13 +246,11 @@ chm <- dsm-dtm
 plot(chm)
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
 
 ## **The VisiMod Workflow**
 
 ------------------------------------------------------------------------
-
-Describe the workflow and intended outcome for this example
 
 ### **1 Prepare Digital Elevation Models**
 
@@ -345,26 +289,30 @@ which indicates the maximum distance to which VI will be calculated (and
 therefore modeled). As `max_vi_rad` increases, processing time will
 increase exponentially.
 
-In this example we will generate 200 points with a max_vi_rad of 500,
+In this example we will generate 200 points with a `max_vi_rad` of 500,
 which will allow us to look at smaller radii as well. We’ll convert the
 resulting data.frame to a `terra` vect to plot it on top of our DSM.
+
+**NOTE:** We are using the returned DSM (`pdems$dsm`) from `prep_dems()`
+because it had interior NAs filled. We could use `pdems$dtm` for our DTM
+as well, but since there were no NAs filled `pdems$dtm == dtm`
 
 ``` r
 gp <- gen_pts(dtm, pdems$dsm, 200, 250)
 head(gp)
 ```
 
-<div data-pagedtable="false">
-
-<script data-pagedtable-source type="application/json">
-{"columns":[{"label":[""],"name":["_rn_"],"type":[""],"align":["left"]},{"label":["x"],"name":[1],"type":["dbl"],"align":["right"]},{"label":["y"],"name":[2],"type":["dbl"],"align":["right"]}],"data":[{"1":"255579.2","2":"4210426","_rn_":"1"},{"1":"254660.0","2":"4211640","_rn_":"2"},{"1":"254624.1","2":"4211344","_rn_":"3"},{"1":"254783.3","2":"4211712","_rn_":"4"},{"1":"255531.7","2":"4210405","_rn_":"5"},{"1":"255530.8","2":"4211037","_rn_":"6"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
-  </script>
-
-</div>
+    ##          x       y
+    ## 1 255239.8 4211167
+    ## 2 255386.9 4210695
+    ## 3 254274.4 4210989
+    ## 4 255333.8 4210861
+    ## 5 254895.4 4211180
+    ## 6 254313.2 4211301
 
 ``` r
 v <- vect(cbind(gp$x, gp$y))
-plot(dsm)
+plot(pdems$dsm)
 plot(v, add=TRUE)
 ```
 
@@ -419,11 +367,11 @@ of spatial resolutions, but other combinations can be explored by
 changing the `agg_fact` parameter or the resolution of data used.
 
 More details on gen_preds() can be found in the function documentation.
-For more details see Table 1 in \[Mistick et.
-al. 2023\]((<https://content.csbs.utah.edu/~pdennison/reprints/denn/2023_Mistick_etal_IJGIS.pdf>).
+For more details see Table 1 in [Mistick et.
+al. 2023](https://content.csbs.utah.edu/~pdennison/reprints/denn/2023_Mistick_etal_IJGIS.pdf).
 Only local and focal variables are included in VisiMod.
 
-**NOTE** The maximum radius we are looking to in this example is 250 m.
+**NOTE:** The maximum radius we are looking to in this example is 250 m.
 Our full study area is 2000 m x 2000 m therefore the area in which our
 points were randomly sampled is 1500 m x 1500 m. Some points may lie
 exactly 250 m from the study area boundary, which is **less than** the
@@ -434,6 +382,24 @@ points that are \< 32 pixels (or 320 m) from the study area edge.
 ``` r
 preds <- gen_preds(dtm, pdems$dsm, cv, "omnidir", agg_fact = 10L, save_dir = file.path(lidar_dir, "out_files"))
 
+# show the first 5 rows and 10 cols of the output data.frame
+head(preds$pred_pts, c(5, 10))
+```
+
+    ##          x       y elevation     slope slope_derivative     curvature
+    ## 1 254269.0 4210505  1936.144 10.956374        17.273523 -0.0041740956
+    ## 2 254274.2 4211505  2004.471 16.563305         4.316786 -0.0003721081
+    ## 3 254274.4 4210989  1958.277  7.605523        16.207669 -0.0071026596
+    ## 4 254285.0 4211384  1996.699 15.298848         8.244572 -0.0003576484
+    ## 5 254285.6 4210933  1962.483  8.625675        21.108549  0.0030124446
+    ##   curvature_plan curvature_prof aspect_sin aspect_cos
+    ## 1   3.529037e-04  -0.0045269993  0.9233380  0.3723001
+    ## 2  -8.163127e-05  -0.0002904768 -0.9079582 -0.4188400
+    ## 3  -1.790710e-03  -0.0053119497  0.9666404  0.2093625
+    ## 4   8.333471e-04  -0.0011909955 -0.9672533 -0.2537587
+    ## 5  -1.209667e-03   0.0042221112  0.8586871  0.5123970
+
+``` r
 # plot an example predictor raster
 plot(preds$pred_rast[["slope_aspect_sin_mean_8"]])
 ```
@@ -464,13 +430,13 @@ head(mod125$perf_mets)
 ```
 
     ## $r2
-    ## [1] 0.8380921
+    ## [1] 0.8041906
     ## 
     ## $rmse
-    ## [1] 0.066016
+    ## [1] 0.07715502
     ## 
     ## $nrmse
-    ## [1] 0.122255
+    ## [1] 0.1433014
 
 ``` r
 mod250<- mod_vi(preds$pred_pts, 250, cross_validate = TRUE, tune = FALSE, num_cores = 4)
@@ -483,13 +449,13 @@ head(mod250$perf_mets)
 ```
 
     ## $r2
-    ## [1] 0.7455943
+    ## [1] 0.6821234
     ## 
     ## $rmse
-    ## [1] 0.05060788
+    ## [1] 0.06254355
     ## 
     ## $nrmse
-    ## [1] 0.1175507
+    ## [1] 0.1635197
 
 ### **6 Map VI**
 
@@ -503,12 +469,16 @@ radii (125 m and 250 m).
 ``` r
 map125 <- map_vi(mod125$ranger_mod, preds$pred_rast, 4, FALSE)
 plot(map125)
-
-map250 <- map_vi(mod250$ranger_mod, preds$pred_rast, 4, FALSE)
-plot(map125)
 ```
 
 ![](README_files/figure-gfm/map-vi-1.png)<!-- -->
+
+``` r
+map250 <- map_vi(mod250$ranger_mod, preds$pred_rast, 4, FALSE)
+plot(map250)
+```
+
+![](README_files/figure-gfm/map-vi-2.png)<!-- -->
 
 ## **Using VisiMod() to generate an RGB VI map**
 
@@ -568,7 +538,7 @@ w <- wedge(x = x[[1]], y = y[[1]], 125, 240, 120)
 plot(w, col = "blue", add=TRUE)
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
 
 ### **Using plotRGB() to plot VI**
 
