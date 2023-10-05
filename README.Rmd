@@ -250,7 +250,7 @@ gp <- gen_pts(dtm, pdems$dsm, 200, 250)
 head(gp)
 ```
 
-While the output of `gen_pts()` is a dataframe, we can vectorize it using `v <- vect(cbind(gp$x, gp$y))` to plot the output, overlaid on our DSM. You can see how max_vi_rad ensured that no points felt within 250 m of the study area’s edge:
+While the output of `gen_pts()` is a dataframe, we can vectorize it using `v <- vect(cbind(gp$x, gp$y))` to plot the output, overlaid on our DSM. You can see how `max_vi_rad` ensured that no points felt within 250 m of the study area’s edge:
 
 ```{r, echo=FALSE}
 v <- vect(cbind(gp$x, gp$y))
