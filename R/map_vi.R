@@ -47,8 +47,11 @@
 map_vi <- function(mod, predictors, cores = floor(parallel::detectCores()/2), 
                    save = T, out_file = file.path(getwd(), "vi.tif")){
   
+  # create clean time printing function
+  prttm <- function() format(Sys.time(), "%Y-%m-%d %H:%M:%S")
+  
   # print message
-  message(paste0(Sys.time(), " map_vi() has begun"))
+  message(paste0(prttm(), " map_vi() has begun"))
   
   # check to make sure all predictor variables from the model are present within the predictor raster
   mod_names <- mod$forest$independent.variable.names
@@ -63,17 +66,17 @@ map_vi <- function(mod, predictors, cores = floor(parallel::detectCores()/2),
   }
   
   # generate prediction map
-  message(paste0(Sys.time(), "   Generating prediction map..."))
+  message(paste0(prttm(), "   Generating prediction map..."))
   pred_ras <- terra::predict(predictors, mod, fun = pred.fun, na.rm=TRUE)
   
   # save, if desired
   if (save == T){
-    message(paste0(Sys.time(), "   Writing to file..."))
+    message(paste0(prttm(), "   Writing to file..."))
     terra::writeRaster(pred_ras, out_file, overwrite = T)
   }
   
   # print message
-  message(paste0(Sys.time(), " map_vi() is complete"))
+  message(paste0(prttm(), " map_vi() is complete"))
   
   # return the prediction map
   return(pred_ras)

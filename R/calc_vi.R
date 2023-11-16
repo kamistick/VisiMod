@@ -43,8 +43,11 @@
 calc_vi <- function(dtm, dsm, pts, vi_type, vi_rad, vi_fov=180, vi_azi = 0, 
                     cores = floor(parallel::detectCores()/2), n_retry = 5L){
   
+  # create clean time printing function
+  prttm <- function() format(Sys.time(), "%Y-%m-%d %H:%M:%S")
+  
   # print message
-  message(paste0(Sys.time(), " calc_vi() has begun"))
+  message(paste0(prttm(), " calc_vi() has begun"))
   
   # first compareGeom, it will return an error if the rasters do not match
   cg <- terra::compareGeom(dtm, dsm, crs=TRUE, ext=TRUE, rowcol=TRUE, res=TRUE)
@@ -132,7 +135,7 @@ calc_vi <- function(dtm, dsm, pts, vi_type, vi_rad, vi_fov=180, vi_azi = 0,
                                        vi <- zonal_sum[1,1] / ((pi * (rad^2)))
                                        
                                        # append vi column to results data.frame
-                                       col_name <- paste0("vi_", as.character(rad))
+                                       col_name <- paste0("vi_", rad)
                                        new_pts[,col_name] <- vi
                                        
                                      }
@@ -227,7 +230,7 @@ calc_vi <- function(dtm, dsm, pts, vi_type, vi_rad, vi_fov=180, vi_azi = 0,
                                        vi <- zonal_sum[1,1] / ((pi * (rad^2))*(vi_fov/360))
                                        
                                        # append vi column to results data.frame
-                                       col_name <- paste0("vi_", as.character(rad))
+                                       col_name <- paste0("vi_", rad)
                                        new_pts[,col_name] <- vi
                                        
                                      }
@@ -332,7 +335,7 @@ calc_vi <- function(dtm, dsm, pts, vi_type, vi_rad, vi_fov=180, vi_azi = 0,
                                        vi <- zonal_sum[1,1] / ((pi * (rad^2))*(vi_fov/360))
                                        
                                        # append vi column to results data.frame
-                                       col_name <- paste0("vi_", as.character(rad))
+                                       col_name <- paste0("vi_", rad)
                                        new_pts[,col_name] <- vi
                                        
                                      }
@@ -357,7 +360,7 @@ calc_vi <- function(dtm, dsm, pts, vi_type, vi_rad, vi_fov=180, vi_azi = 0,
   }
   
   # return result
-  message(paste0(Sys.time(), " calc_vi() is complete"))
+  message(paste0(prttm(), " calc_vi() is complete"))
   return(result)
   
 }

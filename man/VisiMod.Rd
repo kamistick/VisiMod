@@ -59,7 +59,6 @@ dtm <- rast("dtm.tif")
 outras <- VisiMod(dtm, dsm, 500, 500, "directional_single", 120, c(0,120,240),  "C:\\\\proj1\\\\", 4)
 
 # create a 3 band raster to display in RGB
-stack1 <- terra::`add<-`(outras[[1]], outras[[2]])
-multiband_ras <- terra::`add<-`(stack1, outras[[3]])
-writeRaster(multiband_ras, "C:\\\\proj1\\\\vi_map.tif")
+stack <- c(outras[[1]], outras[[2]], outras[[3]])
+writeRaster(stack, "C:\\\\proj1\\\\vi_map.tif")
 }

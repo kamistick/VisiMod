@@ -47,8 +47,11 @@
 gen_preds <- function(dtm, dsm, pts, vi_type, vi_fov=180, vi_azi=0, agg_fact = 10L,
                       save = TRUE, save_dir = getwd()){
   
+  # create clean time printing function
+  prttm <- function() format(Sys.time(), "%Y-%m-%d %H:%M:%S")
+  
   # print message
-  message(paste0(Sys.time(), " gen_preds() has begun"))
+  message(paste0(prttm(), " gen_preds() has begun"))
   
   # suppress progress bars
   terra::terraOptions(progress=0)
@@ -65,8 +68,8 @@ gen_preds <- function(dtm, dsm, pts, vi_type, vi_fov=180, vi_azi=0, agg_fact = 1
   }
   
   # print message
-  message(paste0(Sys.time(), "   Starting predictor generation..."))
-  message(paste0(Sys.time(), "   Running local predictors..."))
+  message(paste0(prttm(), "   Starting predictor generation..."))
+  message(paste0(prttm(), "   Running local predictors..."))
   
   # generate canopy height model, fill negatives with zeros
   chm <- dsm-dtm
@@ -178,7 +181,7 @@ gen_preds <- function(dtm, dsm, pts, vi_type, vi_fov=180, vi_azi=0, agg_fact = 1
     for (pred_rad in c(2,4,6,8,16,32)) {
       
       # print message
-      message(paste0(Sys.time(), "   Running focal predictors at ",  pred_rad,  "px radius..."))
+      message(paste0(prttm(), "   Running focal predictors at ",  pred_rad,  "px radius..."))
       
       # generate focal neighborhoods (matrices) for omnidir
       if (vi_type == "omnidir") {
@@ -385,7 +388,7 @@ gen_preds <- function(dtm, dsm, pts, vi_type, vi_fov=180, vi_azi=0, agg_fact = 1
     final_df <- merge(df, pts)
     
     # return stack and df
-    message(paste0(Sys.time(), " gen_preds() is complete"))
+    message(paste0(prttm(), " gen_preds() is complete"))
     return(list(pred_pts = final_df, pred_rast = stack))
     
     ##############################################################################
@@ -411,7 +414,7 @@ gen_preds <- function(dtm, dsm, pts, vi_type, vi_fov=180, vi_azi=0, agg_fact = 1
       
       # print an update every 25 points
       if(i %% 25 == 0 | i == 1){
-        message(paste0(Sys.time(), "   Starting point ", i, "..."))
+        message(paste0(prttm(), "   Starting point ", i, "..."))
       }
       
       # isolate point and azimuth
@@ -519,7 +522,7 @@ gen_preds <- function(dtm, dsm, pts, vi_type, vi_fov=180, vi_azi=0, agg_fact = 1
     
     # rename your df and return it
     final_df <- pts
-    message(paste0(Sys.time(), " gen_preds() is complete"))
+    message(paste0(prttm(), " gen_preds() is complete"))
     return(final_df)
     
   } 
