@@ -37,12 +37,15 @@
 #' preds <- gen_preds(dtm, dsm, my_points, "directional_single", 90, 90, T, "C:/temp")
 #' 
 #' # model
-#' mod <- mod_vi(preds, 500, T, T, 5L)
+#' mod <- mod_vi(preds$pred_pts, 500, T, T, 5L)
 
 mod_vi <- function(df, vi_rad, cross_validate = FALSE, tune = FALSE, num_cores = floor(parallel::detectCores()/2)){
   
+  # create clean time printing function
+  prttm <- function() format(Sys.time(), "%Y-%m-%d %H:%M:%S")
+  
   # print message
-  message(paste0(Sys.time(), " mod_vi() has begun"))
+  message(paste0(prttm(), " mod_vi() has begun"))
   
   # check for presence of x and y columns -- needed if cross_validate == T
   contains_xy <- FALSE
@@ -84,7 +87,7 @@ mod_vi <- function(df, vi_rad, cross_validate = FALSE, tune = FALSE, num_cores =
   if (cross_validate == FALSE){
     
     # print message
-    message(paste0(Sys.time(), "   Modeling without cross-validation..."))
+    message(paste0(prttm(), "   Modeling without cross-validation..."))
     
     # remove x and y columns, since they're not needed without cv
     if(contains_xy == TRUE) df_noxy <- df |> dplyr::select(-c(x,y))
@@ -94,7 +97,7 @@ mod_vi <- function(df, vi_rad, cross_validate = FALSE, tune = FALSE, num_cores =
     if(tune == TRUE){
       
       # tune by making task, tuning, and getting tune vars
-      message(paste0(Sys.time(), "   Tuning the model..."))
+      message(paste0(prttm(), "   Tuning the model..."))
       rf_task <- mlr::makeRegrTask(data = df_noxy, target = "vi")
       tuned <- tuneRanger::tuneRanger(rf_task, num.threads = num_cores,
                                       show.info = getOption("mlrMBO.show.info", F))
@@ -103,7 +106,7 @@ mod_vi <- function(df, vi_rad, cross_validate = FALSE, tune = FALSE, num_cores =
       sample_fraction_val <- tuned$recommended.pars$sample.fraction
       
       # build full model
-      message(paste0(Sys.time(), "   Building the full model..."))
+      message(paste0(prttm(), "   Building the full model..."))
       rf_all <- ranger::ranger(formula = vi ~ ., data = df_noxy, 
                                mtry = mtry_val, importance = "permutation", 
                                min.node.size = min_node_val, sample.fraction = sample_fraction_val, 
@@ -114,14 +117,14 @@ mod_vi <- function(df, vi_rad, cross_validate = FALSE, tune = FALSE, num_cores =
     } else {
       
       # build full model
-      message(paste0(Sys.time(), "   Building the full model..."))
+      message(paste0(prttm(), "   Building the full model..."))
       rf_all <- ranger::ranger(formula = vi ~ ., data = df_noxy, 
                                importance = "permutation", num.threads = num_cores)
       
     }
     
     # compare predictions vs. observations
-    message(paste0(Sys.time(), "   Assessing model performance..."))
+    message(paste0(prttm(), "   Assessing model performance..."))
     predictions <- rf_all$predictions
     df_pred_obs <- data.frame(observed = df_noxy$vi,
                               predicted = predictions)
@@ -134,7 +137,7 @@ mod_vi <- function(df, vi_rad, cross_validate = FALSE, tune = FALSE, num_cores =
     perf_mets <- list(r2 = r2, rmse = rmse, nrmse = nrmse)
     
     # return pred vs. obs, the full model, and the performance metrics
-    message(paste0(Sys.time(), " mod_vi() is complete"))
+    message(paste0(prttm(), " mod_vi() is complete"))
     return(list(df_pred_obs = df_pred_obs, ranger_mod = rf_all, perf_mets = perf_mets))
     
   }
@@ -144,7 +147,7 @@ mod_vi <- function(df, vi_rad, cross_validate = FALSE, tune = FALSE, num_cores =
   if (cross_validate == TRUE){
     
     # print message
-    message(paste0(Sys.time(), "   Modeling with cross-validation..."))
+    message(paste0(prttm(), "   Modeling with cross-validation..."))
     
     # create copy of df (df_cv will retain fold info, df will not)
     df_cv <- df 
@@ -181,7 +184,7 @@ mod_vi <- function(df, vi_rad, cross_validate = FALSE, tune = FALSE, num_cores =
     if(tune==TRUE){
       
       # tune by making task, tuning, and getting tune vars
-      message(paste0(Sys.time(), "   Tuning the model..."))
+      message(paste0(prttm(), "   Tuning the model..."))
       rf_task <- mlr::makeRegrTask(data = df_cv, target = "vi")
       tuned <- tuneRanger::tuneRanger(rf_task, num.threads = num_cores,
                                       show.info = getOption("mlrMBO.show.info", F))
@@ -190,7 +193,7 @@ mod_vi <- function(df, vi_rad, cross_validate = FALSE, tune = FALSE, num_cores =
       sample_fraction_val <- tuned$recommended.pars$sample.fraction
       
       # build full model
-      message(paste0(Sys.time(), "   Building the full model..."))
+      message(paste0(prttm(), "   Building the full model..."))
       rf_all <- ranger::ranger(formula = vi ~ ., data = df_noxy, 
                                mtry = mtry_val, importance = "permutation", 
                                min.node.size = min_node_val, sample.fraction = sample_fraction_val, 
@@ -201,7 +204,7 @@ mod_vi <- function(df, vi_rad, cross_validate = FALSE, tune = FALSE, num_cores =
     } else {
       
       # build full model
-      message(paste0(Sys.time(), "   Building the full model..."))
+      message(paste0(prttm(), "   Building the full model..."))
       rf_all <- ranger::ranger(formula = vi ~ ., data = df_noxy, 
                                importance = "permutation", num.threads = num_cores)
       
@@ -211,7 +214,7 @@ mod_vi <- function(df, vi_rad, cross_validate = FALSE, tune = FALSE, num_cores =
     for (fold in seq(1,4)){
       
       # print message
-      message(paste0(Sys.time(), "   Modeling fold #", fold, "/4..."))
+      message(paste0(prttm(), "   Modeling fold #", fold, "/4..."))
       
       # define training and validation data
       train_df <- df_cv[df_cv$fold != fold,]
@@ -261,7 +264,7 @@ mod_vi <- function(df, vi_rad, cross_validate = FALSE, tune = FALSE, num_cores =
     }
     
     # get performance metrics and put them in a list
-    message(paste0(Sys.time(), "   Assessing model performance..."))
+    message(paste0(prttm(), "   Assessing model performance..."))
     lm <- lm(predicted ~ observed, df_pred_obs)
     rmse <- Metrics::rmse(df_pred_obs[, "observed"], df_pred_obs[, "predicted"])
     nrmse <- rmse/(max(df_pred_obs[, "observed"]) - min(df_pred_obs[, "predicted"]))
@@ -269,7 +272,7 @@ mod_vi <- function(df, vi_rad, cross_validate = FALSE, tune = FALSE, num_cores =
     perf_mets <- list(r2 = r2, rmse = rmse, nrmse = nrmse)
     
     # return pred vs. obs, the full model, and the performance metrics
-    message(paste0(Sys.time(), " mod_vi() is complete"))
+    message(paste0(prttm(), " mod_vi() is complete"))
     return(list(df_pred_obs = df_pred_obs, ranger_mod = rf_all, perf_mets = perf_mets))
     
   }

@@ -57,5 +57,5 @@ my_points <- calc_vi(dtm, dsm, my_points, "directional_single", c(500, 1000), 90
 preds <- gen_preds(dtm, dsm, my_points, "directional_single", 90, 90, T, "C:/temp")
 
 # model
-mod <- mod_vi(preds, 500, T, T, 5L)
+mod <- mod_vi(preds$pred_pts, 500, T, T, 5L)
 }

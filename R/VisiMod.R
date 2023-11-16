@@ -31,42 +31,45 @@
 #' outras <- VisiMod(dtm, dsm, 500, 500, "directional_single", 120, c(0,120,240),  "C:\\proj1\\", 4)
 #' 
 #' # create a 3 band raster to display in RGB
-#' stack1 <- terra::`add<-`(outras[[1]], outras[[2]])
-#' multiband_ras <- terra::`add<-`(stack1, outras[[3]])
-#' writeRaster(multiband_ras, "C:\\proj1\\vi_map.tif")
+#' stack <- c(outras[[1]], outras[[2]], outras[[3]])
+#' writeRaster(stack, "C:\\proj1\\vi_map.tif")
 
 
 VisiMod <- function(dtm, dsm, num_pts, dist, vi_type, vi_fov=180, vi_azi=0, save_dir = getwd(), cores = floor(parallel::detectCores()/2)){
   
-  message(paste0(Sys.time(), ": Preparing rasters..."))
-  pdems <- prep_dems(dtm, dsm, pasteo(save_dir, "dtm_filled.tif"), paste0(save_dir, "dsm_filled.tif"))
+  # create clean time printing function
+  prttm <- function() format(Sys.time(), "%Y-%m-%d %H:%M:%S")
+  
+  message(paste0(prttm(), " Preparing rasters..."))
+  pdems <- prep_dems(dtm, dsm, paste0(save_dir, "dtm_filled.tif"), paste0(save_dir, "dsm_filled.tif"))
   dtm <- pdems$dtm
   dsm <- pdems$dsm 
   
-  message(paste0(Sys.time(), ": Generating points..."))
+  message(paste0(prttm(), " Generating points..."))
   gpt <- gen_pts(dtm, dsm, num_pts, dist)
   
   # now we split off b/c omni will be handled differently 
   if(vi_type=="omnidir"){
     # calculate_vi 
-    message(paste0(Sys.time(), ": Calculating VI..."))
+    message(paste0(prttm(), " Calculating VI..."))
     cv_df <- calc_vi(dtm, dsm, gpt, vi_type, dist, vi_fov, vi_azi, cores)
     
-    message(paste0(Sys.time(), ": Generating predictors..."))
+    message(paste0(prttm(), " Generating predictors..."))
     gpd <- gen_preds(dtm, dsm, gpt, vi_type, vi_fov, vi_azi, 10L, save=TRUE, save_dir)
     #preds <- rast(paste0(save_dir, "\\predictor_raster_stack_f360.tif"))
     
     rass <- c()
     for (d in dist){
-      message(paste0(Sys.time(), ": Modeling..."))
-      dist_col <- paste0("vi_", as.character(d))
+      message(paste0(prttm(), " Modeling..."))
+      dist_col <- paste0("vi_", d)
       cv_df_dist <- cv_df %>%
         dplyr::select(c("x", "y", dist_col))
       df <- merge(gpd$pred_pts, cv_df_dist, by=c("x", "y"))
       mod <- mod_vi(df, d, cross_validate = FALSE, tune = F, cores)
-      message(paste0(Sys.time(), ": Mapping..."))
-      vimap <- map_vi(mod$ranger_mod, gpd$pred_rast, cores, T, file.path(save_dir, "vi_d", as.character(d), "_f360.tif"))
-      names(vimap) <- paste0("vi_d", as.character(d), "_f360")
+      message(paste0(prttm(), " Mapping..."))
+      vimap <- map_vi(mod$ranger_mod, gpd$pred_rast, cores, T, 
+                      file.path(save_dir, paste0("vi_d", d, "_f360.tif")))
+      names(vimap) <- paste0("vi_d", d, "_f360")
       rass <- c(rass, vimap)
     }
     
@@ -77,22 +80,23 @@ VisiMod <- function(dtm, dsm, num_pts, dist, vi_type, vi_fov=180, vi_azi=0, save
     for (fov in vi_fov){
       for(az in vi_azi){
         # calculate_vi
-        message(paste0(Sys.time(), ": Calculating VI..."))
+        message(paste0(prttm(), " Calculating VI..."))
         cv_df <- calc_vi(dtm, dsm, gpt, vi_type, dist, fov, az, cores)
         
-        message(paste0(Sys.time(), ": Generating predictors..."))
+        message(paste0(prttm(), " Generating predictors..."))
         gpd <- gen_preds(dtm, dsm, gpt, vi_type, fov, az, 10L, save=TRUE, save_dir)
         
         for (d in dist){
-          message(paste0(Sys.time(), ": Modeling..."))
-          dist_col <- paste0("vi_", as.character(d))
+          message(paste0(prttm(), " Modeling..."))
+          dist_col <- paste0("vi_", d)
           cv_df_dist <- cv_df %>%
             dplyr::select(c("x", "y", dist_col))
           df <- merge(gpd$pred_pts, cv_df_dist, by=c("x", "y"))
           mod <- mod_vi(df, d, cross_validate = FALSE, tune = F, cores)
-          message(paste0(Sys.time(), ": Mapping..."))
-          vimap <- map_vi(mod$ranger_mod, gpd$pred_rast, cores, T, file.path(save_dir, "vi_d", as.character(d), "_f", as.character(fov), "_a", as.character(az), ".tif"))
-          names(vimap) <- paste0("vi_d", as.character(d), "_f", as.character(fov), "_a", as.character(az))
+          message(paste0(prttm(), " Mapping..."))
+          vimap <- map_vi(mod$ranger_mod, gpd$pred_rast, cores, T, 
+                          file.path(save_dir, paste0("vi_d", d, "_f", fov, "_a", az, ".tif")))
+          names(vimap) <- paste0("vi_d", d, "_f", fov, "_a", az)
           rass <- c(rass, vimap)
         }
       }
