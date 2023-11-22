@@ -139,6 +139,14 @@ prep_dems <- function(in_dtm, in_dsm, out_dtm, out_dsm){
   message(paste0(prttm(), "    dsm has no interior NA values"))
   if (dsm_fill_flag) in_dsm <- terra::crop(in_dsm, sab, mask = T)
   
+  # reset extent to that of the original if they don't match
+  if (dsm_fill_flag & ext_dsm != terra::ext(in_dsm)) {
+    terra::ext(in_dsm) <- ext_dsm
+  }
+  if (dtm_fill_flag & ext_dtm != terra::ext(in_dtm)) {
+    terra::ext(in_dtm) <- ext_dtm
+  }
+  
   # write to file
   if (dtm_fill_flag) terra::writeRaster(in_dtm, out_dtm, overwrite = T)
   if (dsm_fill_flag) terra::writeRaster(in_dsm, out_dsm, overwrite = T)
