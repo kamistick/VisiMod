@@ -141,11 +141,11 @@ prep_dems <- function(in_dtm, in_dsm, out_dtm, out_dsm){
   
   # reset extent & crop to that of the original if they don't match
   if (dsm_fill_flag & ext_dsm != terra::ext(in_dsm)) {
-    in_dsm <- crop(in_dsm, ext_dsm)
+    in_dsm <- terra::crop(in_dsm, ext_dsm)
     terra::ext(in_dsm) <- ext_dsm
   }
   if (dtm_fill_flag & ext_dtm != terra::ext(in_dtm)) {
-    in_dtm <- crop(in_dtm, ext_dtm)
+    in_dtm <- terra::crop(in_dtm, ext_dtm)
     terra::ext(in_dtm) <- ext_dtm
   }
   
