@@ -120,7 +120,7 @@ prep_dems <- function(in_dtm, in_dsm, out_dtm, out_dsm){
   sab_dsm <- terra::ifel(!is.na(in_dsm), 1, NA) |>
     terra::as.polygons() |>
     terra::fillHoles()
-  sab <- intersect(sab_dtm, sab_dsm)
+  sab <- terra::intersect(sab_dtm, sab_dsm)
   
   # check to see if the extent of sab matches that of in_dtm
   if (terra::ext(sab) != terra::ext(in_dtm)) {
