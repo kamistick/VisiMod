@@ -103,22 +103,48 @@ prep_dems <- function(in_dtm, in_dsm, out_dtm, out_dsm){
     message(paste0(prttm(), "   dtm and dsm have suitable coordinate systems"))
   }
   
+  #-------------------exterior NAs
+  
+  # print message
+  message(paste0(prttm(), "   Checking for exterior NA values..."))
+  
+  # create output flags
+  dtm_trim_flag <- F
+  dsm_trim_flag <- F
+  
+  # get a SpatVector polygon that represents the hole-less area over overlap
+  # between in_dtm and in_dsm
+  sab_dtm <- terra::ifel(!is.na(in_dtm), 1, NA) |>
+    terra::as.polygons() |>
+    terra::fillHoles()
+  sab_dsm <- terra::ifel(!is.na(in_dsm), 1, NA) |>
+    terra::as.polygons() |>
+    terra::fillHoles()
+  sab <- intersect(sab_dtm, sab_dsm)
+  
+  # check to see if the extent of sab matches that of in_dtm
+  if (terra::ext(sab) != terra::ext(in_dtm)) {
+    message(paste0(prttm(), "     Exterior NAs found in dtm, trimming..."))
+    in_dtm <- terra::crop(in_dtm, sab, mask = T)
+    dtm_trim_flag <- T
+  } else {
+    message(paste0(prttm(), "     No exterior NAs found in dtm"))
+  }
+  
+  # check to see if the extent of sab matches that of in_dsm
+  if (terra::ext(sab) != terra::ext(in_dsm)) {
+    message(paste0(prttm(), "     Exterior NAs found in dsm, trimming..."))
+    in_dsm <- terra::crop(in_dsm, sab, mask = T)
+    dsm_trim_flag <- T
+  } else {
+    message(paste0(prttm(), "     No exterior NAs found in dsm"))
+  }
+  
   #-------------------interior NAs
   
   # print message
   message(paste0(prttm(), "   Checking for interior NA values..."))
-  
-  # create study area boundary
-  sab <- terra::ifel(!is.na(in_dtm), 1, NA) |>
-    terra::as.polygons() |>
-    terra::fillHoles()
-  
-  # trim if necessary
-  if (terra::ext(sab) != terra::ext(in_dtm)){
-    in_dtm <- terra::trim(in_dtm)
-    in_dsm <- terra::trim(in_dsm)
-  }
-  
+
   # create output flags
   dtm_fill_flag <- F
   dsm_fill_flag <- F
@@ -127,32 +153,32 @@ prep_dems <- function(in_dtm, in_dsm, out_dtm, out_dsm){
   na_count <- terra::freq(in_dtm, value = NA, zones = sab)$count
   while(na_count != 0){
     dtm_fill_flag <- T
-    message(paste0(prttm(), "    dtm has ", na_count, " NAs. Removing..."))
+    message(paste0(prttm(), "     dtm has ", na_count, " NAs. Removing..."))
     in_dtm <- terra::focal(in_dtm, 9, mean, na.policy = "only", na.rm = T)
     na_count <- terra::freq(in_dtm, value = NA, zones = sab)$count
   }
-  message(paste0(prttm(), "    dtm has no interior NA values"))
+  message(paste0(prttm(), "     dtm has no interior NA values"))
   if (dtm_fill_flag) in_dtm <- terra::crop(in_dtm, sab, mask = T)
   
   # fill nas -- dsm
   na_count <- terra::freq(in_dsm, value = NA, zones = sab)$count
   while(na_count != 0){
     dsm_fill_flag <- T
-    message(paste0(prttm(), "    dsm has ", na_count, " NAs. Removing..."))
+    message(paste0(prttm(), "     dsm has ", na_count, " NAs. Removing..."))
     in_dsm <- terra::focal(in_dsm, 9, mean, na.policy = "only", na.rm = T)
     na_count <- terra::freq(in_dsm, value = NA, zones = sab)$count
   }
-  message(paste0(prttm(), "    dsm has no interior NA values"))
+  message(paste0(prttm(), "     dsm has no interior NA values"))
   if (dsm_fill_flag) in_dsm <- terra::crop(in_dsm, sab, mask = T)
   
   
   # write to file
-  if (dtm_fill_flag) terra::writeRaster(in_dtm, out_dtm, overwrite = T)
-  if (dsm_fill_flag) terra::writeRaster(in_dsm, out_dsm, overwrite = T)
+  if (dtm_fill_flag | dtm_trim_flag) terra::writeRaster(in_dtm, out_dtm, overwrite = T)
+  if (dsm_fill_flag | dsm_trim_flag) terra::writeRaster(in_dsm, out_dsm, overwrite = T)
   
   # read back in and return as SpatRasters
-  if (dtm_fill_flag) in_dtm <- terra::rast(out_dtm)
-  if (dsm_fill_flag) in_dsm <- terra::rast(out_dsm)
+  if (dtm_fill_flag | dtm_trim_flag) in_dtm <- terra::rast(out_dtm)
+  if (dsm_fill_flag | dsm_trim_flag) in_dsm <- terra::rast(out_dsm)
   message(paste0(prttm(), " prep_dems() is complete"))
   return(list(dtm = in_dtm, dsm = in_dsm))
   
