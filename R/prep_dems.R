@@ -114,7 +114,7 @@ prep_dems <- function(in_dtm, in_dsm, out_dtm, out_dsm){
     terra::fillHoles()
   
   # trim if necessary
-  if (ext(sab) != ext(in_dtm)){
+  if (terra::ext(sab) != terra::ext(in_dtm)){
     in_dtm <- terra::trim(in_dtm)
     in_dsm <- terra::trim(in_dsm)
   }
