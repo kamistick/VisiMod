@@ -19,9 +19,9 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## **1 Intoduction**
 
-The VisiMod package was built to facilitate visibility analyses. It provides a suite of tools that allows users to build predictive models that can map visibility (in terms of visibility index (VI) where VI = (visible area)/(total area)) across entire landscapes. [Mistick et. al. 2023](https://content.csbs.utah.edu/~pdennison/reprints/denn/2023_Mistick_etal_IJGIS.pdf) is the original research that led to the development of VisiMod.
+The [VisiMod package](https://github.com/kamistick/VisiMod/) was built to facilitate visibility analyses. It provides a suite of tools that allows users to build predictive models that can map visibility (in terms of visibility index (VI) where VI = (visible area)/(total area)) across entire landscapes. [Mistick et. al. 2023](https://content.csbs.utah.edu/~pdennison/reprints/denn/2023_Mistick_etal_IJGIS.pdf) is the original research that led to the development of VisiMod.
 
-Instead of calculating VI by running viewsheds from every pixel in a rasterized study area, VisiMod allows users to build predictive models based on a sample of points (at which viewsheds are run using [terra::viewshed()](https://rdrr.io/cran/terra/man/viewshed.html)) to predict VI at every pixel. 
+Instead of calculating VI by running viewsheds from every pixel in a rasterized study area, VisiMod allows users to build predictive models based on a sample of points (at which viewsheds are run using [terra::viewshed()](https://rdrr.io/cran/terra/man/viewshed.html) to predict VI at every pixel. 
 
 VisiMod is designed to be used in wildland (i.e. undeveloped) areas. It relies on a digital surface model (DSM) that represents elevations of the ground and any aboveground features present on the landscape, inclusive of vegetation. If VisiMod were deployed for developed areas any aboveground obstructions would be treated as vegetation. We have not tested the performance of VisiMod in developed areas.
 
@@ -33,7 +33,7 @@ The VisiMod package can be installed by calling `devtools::install_github("kamis
 
 VisiMod only requires users to provide a digital terrain model (DTM) and digital surface model (DSM) to run the full workflow. While fine-scale resolution DTMs are available to download download (e.g., from the USGS 3D Elevation Program or OpenTopography), fine-scale DSMs are not widely available, and must be derived from some other data source, such as airborne lidar. The example below walks a user through downloading and processing four USGS 3DEP lidar tiles for use in the VisiMod workflow.
 
-We'll use The National Map (TNM) API, provided by the USGS, to access 3DEP lidar data. For more information on how to use the THM API, [click here](https://apps.nationalmap.gov/tnmaccess/#/). To interact with the TNM GUI and download data, [click here](https://apps.nationalmap.gov/downloader/). 
+We'll use The National Map (TNM) API, provided by the USGS, to access 3DEP lidar data. For more information on how to use the TNM API, [click here](https://apps.nationalmap.gov/tnmaccess/#/). To interact with the TNM GUI and download data, [click here](https://apps.nationalmap.gov/downloader/). 
 
 
 ```{r message = FALSE, warning = FALSE, include = FALSE}
