@@ -19,9 +19,9 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## **1 Intoduction**
 
-The [VisiMod package](https://github.com/kamistick/VisiMod) was built to facilitate visibility analyses. It provides a suite of tools that allows users to build predictive models that can map visibility (in terms of visibility index (VI) where VI = (visible area)/(total area)) across entire landscapes. [Mistick et. al. 2023](https://content.csbs.utah.edu/~pdennison/reprints/denn/2023_Mistick_etal_IJGIS.pdf) is the original research that led to the development of VisiMod.
+The [VisiMod package](https://github.com/kamistick/VisiMod/) was built to facilitate visibility analyses. It provides a suite of tools that allows users to build predictive models that can map visibility (in terms of visibility index (VI) where VI = (visible area)/(total area)) across entire landscapes. [Mistick et. al. 2023](https://content.csbs.utah.edu/~pdennison/reprints/denn/2023_Mistick_etal_IJGIS.pdf) is the original research that led to the development of VisiMod.
 
-Instead of calculating VI by running viewsheds from every pixel in a rasterized study area, VisiMod allows users to build predictive models based on a sample of points (at which viewsheds are run using [terra::viewshed()](https://rdrr.io/cran/terra/man/viewshed.html)) to predict VI at every pixel. 
+Instead of calculating VI by running viewsheds from every pixel in a rasterized study area, VisiMod allows users to build predictive models based on a sample of points (at which viewsheds are run using [terra::viewshed()](https://rdrr.io/cran/terra/man/viewshed.html) to predict VI at every pixel. 
 
 VisiMod is designed to be used in wildland (i.e. undeveloped) areas. It relies on a digital surface model (DSM) that represents elevations of the ground and any aboveground features present on the landscape, inclusive of vegetation. If VisiMod were deployed for developed areas any aboveground obstructions would be treated as vegetation. We have not tested the performance of VisiMod in developed areas.
 
